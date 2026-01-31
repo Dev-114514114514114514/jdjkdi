@@ -119,11 +119,36 @@ end)
 end
 end)()
 
+local hubFolder = "Sapphire"
+local addonFolder = hubFolder.."/Addons"
+local UIStyleFile = hubFolder.."/UIStyle.txt"
+
+if not isfolder(hubFolder) then
+makefolder(hubFolder)
+end
+
+if not isfolder(addonFolder) then
+makefolder(addonFolder)
+end
+
+if not isfile(UIStyleFile) then
+writefile("UIStyle.txt","Obsidian")
+end
+
+savedUIStyle = "Obsidian"
+if readfile and isfile(UIStyleFile) then
+local success, content = pcall(readfile, UIStyleFile)
+if success and (content == "Obsidian" or content == "Linoria") then
+savedUIStyle = content
+end
+end
+UIStyle = savedUIStyle
+
 Pathnode = Instance.new("Folder",workspace)
 Pathnode.Name = "Path Node"
 
 local repo
-if UIStyle == "LinoriaLib" then
+if UIStyle == "Linoria" then
 repo = 'https://raw.githubusercontent.com/mstudio45/LinoriaLib/main/'
 else
 repo = 'https://raw.githubusercontent.com/mstudio45/Obsidian/main/'
@@ -159,13 +184,14 @@ NotifySide = "Right",
 AutoShow = true
 })
 
-if UIStyle == "LinoriaLib" then
+if UIStyle == "Linoria" then
 Tabs = {
 Homepage = Window:AddTab("主页"),
 Player = Window:AddTab("玩家"),
 Exploits = Window:AddTab("漏洞"),
 Visuals = Window:AddTab("视觉"),
 Floor = Window:AddTab("楼层"),
+Development = Window:AddTab("开发"),
 UISettings = Window:AddTab("配置"),
 Addons = Window:AddTab("插件"),
 }
@@ -195,6 +221,11 @@ Floor = Window:AddTab({
 Name = "楼层",
 Description = "基于楼层", 
 Icon = "sparkles"
+}),
+Development = Window:AddTab({
+Name = "开发",
+Description = "实验性功能", 
+Icon = "terminal"
 }),
 UISettings = Window:AddTab({
 Name = "配置",
@@ -237,11 +268,13 @@ Other = Tabs.Floor:AddRightGroupbox("其它")
 ModifiersBox = Tabs.Floor:AddLeftGroupbox('修饰符')
 Farm = Tabs.Floor:AddLeftGroupbox("农场")
 
+ModuleBox = Tabs.Development:AddLeftGroupbox("模块")
+
 SettingsBox = Tabs.UISettings:AddLeftGroupbox('UI','wrench')
 
 Tabs.Homepage:UpdateWarningBox({
 Title = "更新日志：",
-Text = "//Doors//\n<font color=\"rgb(73,230,133)\">移除信息标签栏\n修复假死ESP显示\n改进ESP</font>",
+Text = "//Doors//\n<font color=\"rgb(73,230,133)\">移除信息标签栏\n新增开发标签栏\n改进假死\n改进ESP\n修复无限物品（工作于小储物柜）\n新增追踪线位置\n新增显示距离\n新增显示文本\n新增追踪线厚度\n新增自动躲藏\n新增自由鼠标\n新增禁用移动\n新增模块眩晕\n新增停止相机\n新增UI样式选择器</font>",
 IsNormal = true,
 Visible = true,
 LockSize = true,
@@ -720,6 +753,75 @@ end,
 })
 Automation:AddDivider()
 
+Automation:AddToggle('AutoCloset',{
+     Text = "自动躲藏",
+     Risky = true,
+     Default = false
+}):AddKeyPicker('AutoClosetKeybind', {
+    Default = 'Q',
+    SyncToggleState = true,
+    Mode = 'Toggle',
+    Text = '自动躲藏',
+    NoUI = false,
+    Callback = function(Value) end,
+    ChangedCallback = function(New) end
+})
+local EntitysTable = {
+    RushMoving = 85,
+    BackdoorRush = 90,
+    AmbushMoving = 144,
+    GlitchRush = 120,
+    GlitchAmbush = 155,
+    A60 = 130,
+    A120 = 75
+}
+function GetNearestCloset()
+local closest = nil
+local MaxDistance = math.huge
+local assets = workspace.CurrentRooms[LocalPlayer:GetAttribute("CurrentRoom")]
+if assets then
+for _, v in ipairs(assets:FindFirstChild("Assets", true):GetChildren()) do
+if v.Name == "Wardrobe" or v.Name == "Rooms_Locker" or v.Name == "Rooms_Locker_Fridge" 
+or v.Name == "Toolshed" or v.Name == "Locker_Large" or v.Name == "Backdoor_Wardrobe" 
+or v.Name == "Bed" or v.Name == "Double_Bed" then
+if v.PrimaryPart then
+local Distance = (LocalPlayer.Character.HumanoidRootPart.Position - v.PrimaryPart.Position).Magnitude
+if Distance < MaxDistance then
+closest = v
+MaxDistance = Distance
+end
+end
+end
+end
+end
+return closest
+end
+table.insert(Connections, RunService.RenderStepped:Connect(function(dt)
+if Toggles.AutoCloset.Value then
+local Closet = GetNearestCloset()
+for _, v in ipairs(workspace:GetChildren()) do
+local range = EntitysTable[v.Name]
+if range and v.PrimaryPart then
+if (LocalPlayer.Character.HumanoidRootPart.Position - v.PrimaryPart.Position).Magnitude <= range then 
+if Closet then
+if not LocalPlayer.Character.PrimaryPart.Anchored then
+fireproximityprompt(Closet:WaitForChild("HidePrompt"))
+end
+end
+elseif (LocalPlayer.Character.HumanoidRootPart.Position - v.PrimaryPart.Position).Magnitude > range then 
+LocalPlayer.Character:SetAttribute("Hiding", false)
+if not v:GetAttribute("Destroying") then
+v:SetAttribute("Destroying", true)
+v.Destroying:Connect(function()
+LocalPlayer.Character:SetAttribute("Hiding", false)
+end)
+end
+end
+end
+end
+end
+end))
+
 Automation:AddToggle('AutoHeartbeatMiniGame', {
     Text = "自动心跳小游戏",
     Default = false
@@ -908,7 +1010,7 @@ if v.Name == "ElevatorBreaker" then
 Breaker = v
 end
 end
-while task.wait() do
+while task.wait(0.1) do
 if not Toggles.AutoBreakerBox.Value then break end
 if Breaker then
 if Options.BreakerBoxMode and Options.BreakerBoxMode.Value == "漏洞" then
@@ -1591,12 +1693,30 @@ Cellar = true
 local ShearsNames = { 
 SkullPrompt = true 
 }
+local function isLockpickRelatedPrompt(v, validParents, validNames)
+if validParents[v.Parent.Name] or validNames[v.Name] then
+return true
+end
+local parent = v.Parent
+if parent and parent.Name == "Door" then
+local grandParent = parent.Parent
+if grandParent and validParents[grandParent.Name] then
+local lockerTypes = {
+["Locker_Small_Locked"] = true
+}
+if lockerTypes[grandParent.Name] then
+return true
+end
+end
+end
+return false
+end
 local InfStore = {}
 local InfSStore = {}
 local function scanPrompts(validParents, validNames)
 local t = {}
 for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
-if v:IsA("ProximityPrompt") and (validParents[v.Parent.Name] or validNames[v.Name]) then
+if v:IsA("ProximityPrompt") and isLockpickRelatedPrompt(v, validParents, validNames) then
 table.insert(t, v)
 end
 end
@@ -1657,7 +1777,7 @@ local function setupRealtimeDetection()
 local descAddedConnection = workspace.DescendantAdded:Connect(function(v)
 task.wait(0.1)
 if v:IsA("ProximityPrompt") then
-if LockpickParents[v.Parent.Name] or LockpickNames[v.Name] then
+if isLockpickRelatedPrompt(v, LockpickParents, LockpickNames) then
 if Toggles.InfiniteItems and Toggles.InfiniteItems.Value then
 table.insert(InfStore, v)
 local hasTool = LocalPlayer.Character and 
@@ -1668,7 +1788,7 @@ addFake(v, "Lockpick")
 end
 end
 end
-if ShearsParents[v.Parent.Name] or ShearsNames[v.Name] then
+if isLockpickRelatedPrompt(v, ShearsParents, ShearsNames) then
 if Toggles.InfiniteSItems and Toggles.InfiniteSItems.Value then
 table.insert(InfSStore, v)
 local hasTool = LocalPlayer.Character and 
@@ -1963,7 +2083,9 @@ end
 
 local ESPGlobalSettings = {
 ESPType = "Highlight",
+TracerPosition = "Bottom",
 TextSize = 16,
+TracerThickness = 1,
 FillTransparency = 0.7,
 OutlineTransparency = 0.4,
 }
@@ -2001,6 +2123,31 @@ ESPLibrary.GlobalConfig.Rainbow = Value
 end
 })
 
+SettingsESP:AddToggle('ShowDistance',{
+     Text = "显示距离",
+     Default = true,
+Callback = function(Value)
+ESPLibrary.GlobalConfig.Distance = Value
+end
+})
+
+SettingsESP:AddToggle('ShowText',{
+     Text = "显示文本",
+     Default = true,
+Callback = function(Value)
+ESPLibrary.GlobalConfig.Billboards = Value
+end
+})
+
+SettingsESP:AddDropdown("TracerPosition", {
+    Values = {"Top", "Bottom", "Center", "Mouse"},
+    Default = "Bottom",
+    Text = "追踪线位置",
+Callback = function(Value)
+ESPGlobalSettings.TracerPosition = Value
+end,
+})
+
 SettingsESP:AddSlider('GlobalTextSize', {
     Text = "文本大小",
     Default = 16,
@@ -2010,6 +2157,18 @@ SettingsESP:AddSlider('GlobalTextSize', {
     Compact = true,
 Callback = function(Value)
 ESPGlobalSettings.TextSize = Value
+end
+})
+
+SettingsESP:AddSlider("TracerThicknessSlider", {
+    Text = "追踪线厚度",
+    Default = 1,
+    Min = 0.1,
+    Max = 5.0,
+    Rounding = 1,
+    Compact = true,
+Callback = function(Value)
+ESPGlobalSettings.TracerThickness = Value
 end
 })
 
@@ -2100,7 +2259,8 @@ OutlineTransparency = ESPGlobalSettings.OutlineTransparency,
 Tracer = { 
 Enabled = true,
 Color = DoorColor,
-From = "Bottom"
+Thickness = ESPGlobalSettings.TracerThickness,
+From = ESPGlobalSettings.TracerPosition
 },
 Arrow = {
 Enabled = true,
@@ -2273,7 +2433,8 @@ OutlineTransparency = ESPGlobalSettings.OutlineTransparency,
 Tracer = { 
 Enabled = true,
 Color = color,
-From = "Bottom"
+Thickness = ESPGlobalSettings.TracerThickness,
+From = ESPGlobalSettings.TracerPosition
 },
 Arrow = {
 Enabled = true,
@@ -2395,7 +2556,8 @@ OutlineTransparency = ESPGlobalSettings.OutlineTransparency,
 Tracer = { 
 Enabled = true,
 Color = color,
-From = "Bottom"
+Thickness = ESPGlobalSettings.TracerThickness,
+From = ESPGlobalSettings.TracerPosition
 },
 Arrow = {
 Enabled = true,
@@ -2617,7 +2779,8 @@ OutlineTransparency = ESPGlobalSettings.OutlineTransparency,
 Tracer = { 
 Enabled = true,
 Color = HidingSpotColor,
-From = "Bottom"
+Thickness = ESPGlobalSettings.TracerThickness,
+From = ESPGlobalSettings.TracerPosition
 },
 Arrow = {
 Enabled = true,
@@ -2731,7 +2894,8 @@ OutlineTransparency = ESPGlobalSettings.OutlineTransparency,
 Tracer = { 
 Enabled = true,
 Color = color,
-From = "Bottom"
+Thickness = ESPGlobalSettings.TracerThickness,
+From = ESPGlobalSettings.TracerPosition
 },
 Arrow = {
 Enabled = true,
@@ -2849,7 +3013,8 @@ OutlineTransparency = ESPGlobalSettings.OutlineTransparency,
 Tracer = { 
 Enabled = true,
 Color = color,
-From = "Bottom"
+Thickness = ESPGlobalSettings.TracerThickness,
+From = ESPGlobalSettings.TracerPosition
 },
 Arrow = {
 Enabled = true,
@@ -3003,7 +3168,8 @@ OutlineTransparency = ESPGlobalSettings.OutlineTransparency,
 Tracer = { 
 Enabled = true,
 Color = GoldColor,
-From = "Bottom"
+Thickness = ESPGlobalSettings.TracerThickness,
+From = ESPGlobalSettings.TracerPosition
 },
 Arrow = {
 Enabled = true,
@@ -3173,7 +3339,8 @@ OutlineTransparency = ESPGlobalSettings.OutlineTransparency,
 Tracer = { 
 Enabled = true,
 Color = color,
-From = "Bottom"
+Thickness = ESPGlobalSettings.TracerThickness,
+From = ESPGlobalSettings.TracerPosition
 },
 Arrow = {
 Enabled = true,
@@ -3295,7 +3462,8 @@ OutlineTransparency = ESPGlobalSettings.OutlineTransparency,
 Tracer = { 
 Enabled = true,
 Color = StardustColor,
-From = "Bottom"
+Thickness = ESPGlobalSettings.TracerThickness,
+From = ESPGlobalSettings.TracerPosition
 },
 Arrow = {
 Enabled = true,
@@ -3419,7 +3587,7 @@ Model = entity,
 Color = EntityColor,
 MaxDistance = 1000,
 TextSize = ESPGlobalSettings.TextSize,
-ESPType = "Highlight",
+ESPType = ESPGlobalSettings.ESPType,
 FillColor = EntityColor,
 OutlineColor = EntityColor,
 FillTransparency = ESPGlobalSettings.FillTransparency,
@@ -3427,7 +3595,8 @@ OutlineTransparency = ESPGlobalSettings.OutlineTransparency,
 Tracer = { 
 Enabled = true,
 Color = EntityColor,
-From = "Bottom"
+Thickness = ESPGlobalSettings.TracerThickness,
+From = ESPGlobalSettings.TracerPosition
 },
 Arrow = {
 Enabled = true,
@@ -5555,6 +5724,54 @@ end
 end
 })
 
+ModuleBox:AddToggle('FreeMouse',{
+     Text = "自由鼠标",
+     Default = false,
+Callback = function(Value)
+if Value then
+RequiredMainGame.freemouse = true
+else
+RequiredMainGame.freemouse = false
+end
+end
+})
+
+ModuleBox:AddToggle('DisableMovement',{
+     Text = "禁用移动",
+     Default = false,
+Callback = function(Value)
+if Value then
+RequiredMainGame.disableMovement = true
+else
+RequiredMainGame.disableMovement = false
+end
+end
+})
+
+ModuleBox:AddToggle('Stunned',{
+     Text = "模块眩晕",
+     Default = false,
+Callback = function(Value)
+if Value then
+RequiredMainGame.stunned = true
+else
+RequiredMainGame.stunned = false
+end
+end
+})
+
+ModuleBox:AddToggle('StopCam',{
+     Text = "停止相机",
+     Default = false,
+Callback = function(Value)
+if Value then
+RequiredMainGame.stopcam = true
+else
+RequiredMainGame.stopcam = false
+end
+end
+})
+
 table.insert(Connections,RunService.RenderStepped:Connect(function()
 alive = LocalPlayer:GetAttribute("Alive")
 if alive then
@@ -5566,6 +5783,11 @@ end
 if LocalPlayer:GetAttribute("FakeDeath") == true then
 latestRoom = ReplicatedStorage.GameData.LatestRoom.Value
 LocalPlayer:SetAttribute("CurrentRoom", latestRoom)
+for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
+if v:IsA("ProximityPrompt") then
+v.Style = Enum.ProximityPromptStyle.Default
+end
+end
 end
 
 if Toggles.NoCutscenes.Value then
@@ -6123,6 +6345,18 @@ Tooltip = "切换光标的可见性",
 Library.ShowCustomCursor = Toggles.ShowCustomCursor.Value
 end)
 
+SettingsBox:AddDropdown("UIStyleSelector", {
+    Values = {"Obsidian", "Linoria"},
+    Default = savedUIStyle,
+    Text = "UI样式",
+Callback = function(Value)
+if writefile then
+pcall(writefile, UIStyleFile, Value)
+Library:Notify("重启脚本后生效", 3)
+end
+end
+})
+
 SettingsBox:AddDropdown("DPIDropdown", {
     Values = { "50%", "75%", "100%", "125%", "150%", "175%", "200%" },
     Default = "100%",
@@ -6140,17 +6374,6 @@ SettingsBox:AddButton({
 Unload()
 end
 })
-
-local hubFolder = "Sapphire"
-local addonFolder = hubFolder.."/Addons"
-
-if not isfolder(hubFolder) then
-makefolder(hubFolder)
-end
-
-if not isfolder(addonFolder) then
-makefolder(addonFolder)
-end
 
 Starring = Starring or {}
 Starring.Addons = {}
@@ -6172,7 +6395,6 @@ end
 
 end
 end
-
 
 local folder_path = "Sapphire"
 local file_path = "Doors"
