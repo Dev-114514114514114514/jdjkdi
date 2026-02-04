@@ -25,6 +25,9 @@ promptReachMultiplier = 2.0
 
 Floor = ReplicatedStorage.GameData.Floor
 
+GameData = ReplicatedStorage:WaitForChild("GameData")
+LatestRoom = GameData:WaitForChild("LatestRoom")
+
 RemoteFolder = ReplicatedStorage:FindFirstChild("RemotesFolder")
 MainGame = LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game
 RequiredMainGame = require(LocalPlayer.PlayerGui.MainUI.Initiator.Main_Game)
@@ -178,7 +181,7 @@ Library:Notify("正在加载 Sapphire | Doors",5)
 
 Window = Library:CreateWindow({
 Title = '💎 Sapphire',
-Footer = "QQ群1070767561",
+Footer = "楼层："..Floor.Value,
 Center = true,
 NotifySide = "Right",
 AutoShow = true
@@ -274,7 +277,7 @@ SettingsBox = Tabs.UISettings:AddLeftGroupbox('UI','wrench')
 
 Tabs.Homepage:UpdateWarningBox({
 Title = "更新日志：",
-Text = "//Doors//\n<font color=\"rgb(73,230,133)\">移除信息标签栏\n新增开发标签栏\n改进假死\n改进ESP\n修复无限物品（工作于小储物柜）\n新增追踪线位置\n新增显示距离\n新增显示文本\n新增追踪线厚度\n新增自动躲藏\n新增自由鼠标\n新增禁用移动\n新增模块眩晕\n新增停止相机\n新增UI样式选择器</font>",
+Text = "//Doors//\n<font color=\"rgb(73,230,133)\">改进自动解挂锁\n改进通知挂锁密码\n新增暴力破解挂锁</font>",
 IsNormal = true,
 Visible = true,
 LockSize = true,
@@ -307,6 +310,17 @@ end
 })
 
 Info:AddLabel("[<font color=\"rgb(73,230,133)\">千change</font>] 所有者")
+Info:AddLabel("[<font color=\"rgb(73,230,133)\">3643018932</font>] 贡献者")
+Info:AddDivider()
+Info:AddLabel({
+Text = "<font color=\"rgb(135,206,235)\">加入我们的群组</font>",
+Size = 23
+})
+Info:AddLabel("主群：<font color=\"rgb(173,216,230)\">1070767561</font>")
+Info:AddLabel("②群：<font color=\"rgb(173,216,230)\">1075296984</font>")
+Info:AddLabel("③群：<font color=\"rgb(173,216,230)\">1077974715</font>")
+Info:AddLabel("④群：<font color=\"rgb(173,216,230)\">1079930056</font>")
+
 
 Movement:AddToggle('SpeedBoost', {
     Text = "移动速度",
@@ -838,157 +852,90 @@ end
 return oldHeartbeatNamecall(self, ...)
 end))
 
-local PL = nil
-local UnlockDistance = 40
-Automation:AddToggle('AutoCodeFire', {
+Automation:AddToggle('AutoLibraryCode', {
     Text = "自动解挂锁",
-    Default = false,
-    Tooltip = "在有效范围内自动解锁挂锁",
-Callback = function(on)
-if on then
-if not game:GetService("ReplicatedStorage"):FindFirstChild("RemotesFolder") then
-Library:Notify("未找到远程事件文件夹", 3)
-Toggles.AutoCodeFire:SetValue(false)
-return
-end
-PL = game:GetService("ReplicatedStorage").RemotesFolder:FindFirstChild("PL")
-if not PL then
-Library:Notify("未找到挂锁远程事件", 3)
-Toggles.AutoCodeFire:SetValue(false)
-return
-end
-while game:GetService("ReplicatedStorage").GameData.LatestRoom.Value < 50 do
-task.wait(0.4)
-if not Toggles.AutoCodeFire.Value then return end
-end
-local seenPapers = {}
-local lastCodes = {}
-local lastFireTimes = {}
-local padPart = nil
-local function updatePad()
-local idx = game:GetService("ReplicatedStorage").GameData.LatestRoom.Value
-local roomRoot = workspace.CurrentRooms and workspace.CurrentRooms[idx]
-if roomRoot then
-local pad = roomRoot:FindFirstChild("Padlock", true)
-padPart = pad and (pad.PrimaryPart or pad:FindFirstChildWhichIsA("BasePart"))
-else
-padPart = nil
-end
-end
-local function parsePaper(paper, hintsContainer)
-local children = paper:WaitForChild("UI"):GetChildren()
-local map, order = {}, {}
-for i = 1, #children do
-local c = children[i]
-local idx = tonumber(c.Name)
-if idx then
-local key = c.ImageRectOffset.X .. "_" .. c.ImageRectOffset.Y
-map[key] = { idx, "" }
-order[idx] = key
-end
-end
-if hintsContainer then
-for _, ic in ipairs(hintsContainer:GetChildren()) do
-if ic.Name == "Icon" then
-local key = ic.ImageRectOffset.X .. "_" .. ic.ImageRectOffset.Y
-local entry = map[key]
-if entry then
-local lbl = ic:FindFirstChildWhichIsA("TextLabel")
-if lbl then 
-entry[2] = lbl.Text 
-end
-end
-end
-end
-end
-local parts = {}
-for i = 1, #order do
-parts[i] = map[order[i]][2]
-end
-return table.concat(parts)
-end
-local function handleCode(paper)
-local hints = LocalPlayer.PlayerGui:FindFirstChild("PermUI") and 
-LocalPlayer.PlayerGui.PermUI:FindFirstChild("Hints")
-local code = parsePaper(paper, hints)
-if lastCodes[paper] ~= code and code ~= "" then
-lastCodes[paper] = code
-if padPart and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-local dist = (LocalPlayer.Character.HumanoidRootPart.Position - padPart.Position).Magnitude
-if dist <= UnlockDistance then
-local now = tick()
-if not lastFireTimes[code] or now - lastFireTimes[code] > 1 then
-local ok = pcall(function() 
-if PL then 
-PL:FireServer(code) 
-end
-end)
-if ok then 
-lastFireTimes[code] = now 
-end
-end
-end
-end
-end
-end
-local function addPaper(paper)
-if seenPapers[paper] then return end
-seenPapers[paper] = true
-local descAddedConn = paper.DescendantAdded:Connect(function()
-handleCode(paper)
-end)
-local descRemovingConn = paper.DescendantRemoving:Connect(function()
-handleCode(paper)
-end)
-handleCode(paper)
-table.insert(Connections, descAddedConn)
-table.insert(Connections, descRemovingConn)
-end
-local function removePaper(paper)
-seenPapers[paper] = nil
-lastCodes[paper] = nil
-end
-updatePad()
-local roomConn = game:GetService("ReplicatedStorage").GameData.LatestRoom:GetPropertyChangedSignal("Value"):Connect(updatePad)
-table.insert(Connections, roomConn)
-local function scanContainer(container)
-for _, obj in ipairs(container:GetChildren()) do
-if obj.Name == "LibraryHintPaper" or obj.Name == "LibraryHintPaperHard" then
-addPaper(obj)
-end
-end
-end
-scanContainer(LocalPlayer.Character)
-scanContainer(LocalPlayer.Backpack)
-local backpackAddedConn = LocalPlayer.Backpack.ChildAdded:Connect(function(obj)
-if obj.Name == "LibraryHintPaper" or obj.Name == "LibraryHintPaperHard" then
-addPaper(obj)
-end
-end)
-local backpackRemovedConn = LocalPlayer.Backpack.ChildRemoved:Connect(function(obj)
-removePaper(obj)
-end)
-table.insert(Connections, backpackAddedConn)
-table.insert(Connections, backpackRemovedConn)
-local characterAddedConn = LocalPlayer.CharacterAdded:Connect(function(char)
-task.wait(1)
-scanContainer(char)
-end)
-table.insert(Connections, characterAddedConn)
-else
-end
-end
+    Default = false
 })
+
+Automation:AddToggle('BruteForceLibraryCose', {
+    Text = "暴力破解挂锁",
+    Default = false
+})
+
 Automation:AddSlider('UnlockPadLockDistance', {
     Text = '解挂锁距离',
-    Min = 40, 
-    Max = 100, 
-    Default = 40,
+    Min = 40, Max = 100, Default = 40,
     Rounding = 1,
 Callback = function(v)
-UnlockDistance = v
 end
 })
+
+local function GetLibraryPattern()
+local Paper = LocalPlayer.Character:FindFirstChild("LibraryHintPaper") 
+or LocalPlayer.Backpack:FindFirstChild("LibraryHintPaper") 
+or LocalPlayer.Character:FindFirstChild("LibraryHintPaperHard") 
+or LocalPlayer.Backpack:FindFirstChild("LibraryHintPaperHard")
+if not Paper then return "_____" end
+local Slots = {"_", "_", "_", "_", "_"}
+local Hints = LocalPlayer.PlayerGui.PermUI.Hints:GetChildren()
+for _, UI in ipairs(Paper.UI:GetChildren()) do
+if UI:IsA("ImageLabel") and tonumber(UI.Name) then
+local SlotIndex = tonumber(UI.Name)
+local IconX = UI.ImageRectOffset.X
+for _, Hint in ipairs(Hints) do
+if Hint.Name == "Icon" and Hint.ImageRectOffset.X == IconX then
+Slots[SlotIndex] = Hint.TextLabel.Text
+break
+end
+end
+end
+end
+return table.concat(Slots)
+end
+local function GenerateGuess(Pattern)
+local Guess = ""
+for i = 1, #Pattern do
+local Char = string.sub(Pattern, i, i)
+if Char == "_" then
+Guess = Guess .. math.random(0, 9)
+else
+Guess = Guess .. Char
+end
+end
+return Guess
+end
+local AutoLibraryTimer = 0
+local NotifyTimer = 0
+table.insert(Connections, RunService.Heartbeat:Connect(function(dt)
+if not alive then return end
+AutoLibraryTimer = AutoLibraryTimer + dt
+NotifyTimer = NotifyTimer + dt
+if AutoLibraryTimer > 0.1 then
+AutoLibraryTimer = 0
+if LatestRoom.Value == 50 then
+local Padlock = Workspace.CurrentRooms:FindFirstChild("Padlock", true)
+if Padlock then
+local Root = LocalPlayer.Character.HumanoidRootPart
+local Pivot = Padlock:GetPivot().Position
+if (Root.Position - Pivot).Magnitude < Options.UnlockPadLockDistance.Value then
+local Pattern = GetLibraryPattern()
+local IsComplete = not string.find(Pattern, "_")
+if Toggles.AutoLibraryCode.Value and IsComplete then
+RemoteFolder.PL:FireServer(Pattern)
+end
+if Toggles.BruteForceLibraryCose.Value and not IsComplete then
+local Guess = GenerateGuess(Pattern)
+RemoteFolder.PL:FireServer(Guess)
+end
+if Toggles.NotifyLibraryCode.Value and NotifyTimer > 2 then
+NotifyTimer = 0
+Library:Notify("挂锁密码: " .. Pattern, 1.5)
+end
+end
+end
+end
+end
+end))
 
 local Breaker = nil
 
@@ -4119,103 +4066,9 @@ end
 end
 end))
 
-NotifyBox:AddToggle('AutoCodeNotify', {
+NotifyBox:AddToggle('NotifyLibraryCode', {
     Text = "通知挂锁密码",
-    Default = false,
-    Tooltip = "将密码显示为通知",
-Callback = function(on)
-if on then
-while game:GetService("ReplicatedStorage").GameData.LatestRoom.Value < 50 do
-task.wait(0.4)
-if not Toggles.AutoCodeNotify.Value then return end
-end
-local seenPapers = {}
-local lastCodes = {}
-local function parsePaper(paper, hintsContainer)
-local children = paper:WaitForChild("UI"):GetChildren()
-local map, order = {}, {}
-for i = 1, #children do
-local c = children[i]
-local idx = tonumber(c.Name)
-if idx then
-local key = c.ImageRectOffset.X .. "_" .. c.ImageRectOffset.Y
-map[key] = { idx, "" }
-order[idx] = key
-end
-end
-if hintsContainer then
-for _, ic in ipairs(hintsContainer:GetChildren()) do
-if ic.Name == "Icon" then
-local key = ic.ImageRectOffset.X .. "_" .. ic.ImageRectOffset.Y
-local entry = map[key]
-if entry then
-local lbl = ic:FindFirstChildWhichIsA("TextLabel")
-if lbl then 
-entry[2] = lbl.Text 
-end
-end
-end
-end
-end
-local parts = {}
-for i = 1, #order do
-parts[i] = map[order[i]][2]
-end
-return table.concat(parts)
-end
-local function handleCode(paper)
-local hints = LocalPlayer.PlayerGui:FindFirstChild("PermUI") and 
-LocalPlayer.PlayerGui.PermUI:FindFirstChild("Hints")
-local code = parsePaper(paper, hints)
-if lastCodes[paper] ~= code and code ~= "" then
-lastCodes[paper] = code
-Library:Notify("挂锁密码是 "..code, 3)
-end
-end
-local function addPaper(paper)
-if seenPapers[paper] then return end
-seenPapers[paper] = true
-local descAddedConn = paper.DescendantAdded:Connect(function()
-handleCode(paper)
-end)
-local descRemovingConn = paper.DescendantRemoving:Connect(function()
-handleCode(paper)
-end)
-handleCode(paper)
-table.insert(Connections, descAddedConn)
-table.insert(Connections, descRemovingConn)
-end
-local function removePaper(paper)
-seenPapers[paper] = nil
-lastCodes[paper] = nil
-end
-local function scanContainer(container)
-for _, obj in ipairs(container:GetChildren()) do
-if obj.Name == "LibraryHintPaper" or obj.Name == "LibraryHintPaperHard" then
-addPaper(obj)
-end
-end
-end
-scanContainer(LocalPlayer.Character)
-scanContainer(LocalPlayer.Backpack)
-local backpackAddedConn = LocalPlayer.Backpack.ChildAdded:Connect(function(obj)
-if obj.Name == "LibraryHintPaper" or obj.Name == "LibraryHintPaperHard" then
-addPaper(obj)
-end
-end)
-local backpackRemovedConn = LocalPlayer.Backpack.ChildRemoved:Connect(function(obj)
-removePaper(obj)
-end)
-table.insert(Connections, backpackAddedConn)
-table.insert(Connections, backpackRemovedConn)
-local characterAddedConn = LocalPlayer.CharacterAdded:Connect(function(char)
-task.wait(1)
-scanContainer(char)
-end)
-table.insert(Connections, characterAddedConn)
-else
-end
-end
+    Default = false
 })
 
 local oxygenNotifyRunning = false
@@ -6367,6 +6220,7 @@ local DPI = tonumber(Value)
 Library:SetDPIScale(DPI)
 end,
 })
+SettingsBox:AddDivider()
 
 SettingsBox:AddButton({
      Text = "卸载脚本",
@@ -6375,8 +6229,8 @@ Unload()
 end
 })
 
-Starring = Starring or {}
-Starring.Addons = {}
+Sapphire = Sapphire or {}
+Sapphire.Addons = {}
 
 for _, file in ipairs(listfiles(addonFolder)) do
 if file:sub(-4) == ".lua" or file:sub(-4) == ".txt" then
@@ -6384,7 +6238,7 @@ local success, addon = pcall(function()
 return loadstring(readfile(file))()
 end)
 if success and type(addon) == "table" then
-table.insert(Starring.Addons, addon)
+table.insert(Sapphire.Addons, addon)
 
 AddonBox:AddToggle(addon.Text, {
 Text = addon.Text,
