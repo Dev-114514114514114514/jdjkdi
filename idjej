@@ -272,12 +272,13 @@ ModifiersBox = Tabs.Floor:AddLeftGroupbox('修饰符')
 Farm = Tabs.Floor:AddLeftGroupbox("农场")
 
 ModuleBox = Tabs.Development:AddLeftGroupbox("模块")
+AdminPanel = Tabs.Development:AddRightGroupbox("管理员面板")
 
 SettingsBox = Tabs.UISettings:AddLeftGroupbox('UI','wrench')
 
 Tabs.Homepage:UpdateWarningBox({
 Title = "更新日志：",
-Text = "//Doors//\n<font color=\"rgb(73,230,133)\">改进ESP\n改进自动故障\n新增无故障跳脸</font>",
+Text = "//Doors//\n<font color=\"rgb(73,230,133)\">新增生成Surge\n新增生成Bramble\n新增生成Groundskeeper/新增获取开发者选项</font>",
 IsNormal = true,
 Visible = true,
 LockSize = true,
@@ -5594,6 +5595,41 @@ RequiredMainGame.stopcam = true
 else
 RequiredMainGame.stopcam = false
 end
+end
+})
+
+AdminPanel:AddButton({
+    Text = "生成Surge",
+Func = function()
+game:GetService("ReplicatedStorage").RemotesFolder.AdminPanelRunCommand:FireServer("Surge", {})
+end
+})
+
+AdminPanel:AddButton({
+    Text = "生成Bramble",
+Func = function()
+game:GetService("ReplicatedStorage").RemotesFolder.AdminPanelRunCommand:FireServer("Bramble", {})
+end
+})
+
+AdminPanel:AddButton({
+    Text = "生成Groundskeeper",
+Func = function()
+game:GetService("ReplicatedStorage").RemotesFolder.AdminPanelRunCommand:FireServer("Groundskeeper", {})
+end
+})
+
+AdminPanel:AddButton({
+    Text = "获取开发者选项",
+    DoubleClick = true,
+Func = function()
+queue_on_teleport([[
+game:GetService("RunService").Heartbeat:Connect(function()
+game.Players.LocalPlayer:SetAttribute("ServerAdmin", 5)
+end)
+]])
+Library:Notify("正在重进服务器，请等待...",10)
+RemoteFolder.PlayAgain:FireServer()
 end
 })
 
