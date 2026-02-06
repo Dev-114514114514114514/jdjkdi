@@ -5623,11 +5623,13 @@ AdminPanel:AddButton({
     Text = "获取开发者选项",
     DoubleClick = true,
 Func = function()
+for i = 1, 5 do
 queue_on_teleport([[
 game:GetService("RunService").Heartbeat:Connect(function()
 game.Players.LocalPlayer:SetAttribute("ServerAdmin", 5)
 end)
 ]])
+end
 Library:Notify("正在重进服务器，请等待...",10)
 RemoteFolder.PlayAgain:FireServer()
 end
