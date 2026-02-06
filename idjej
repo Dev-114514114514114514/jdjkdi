@@ -277,7 +277,7 @@ SettingsBox = Tabs.UISettings:AddLeftGroupbox('UI','wrench')
 
 Tabs.Homepage:UpdateWarningBox({
 Title = "更新日志：",
-Text = "//Doors//\n<font color=\"rgb(73,230,133)\">改进自动解挂锁\n改进通知挂锁密码\n新增暴力破解挂锁</font>",
+Text = "//Doors//\n<font color=\"rgb(73,230,133)\">改进ESP\n改进自动故障\n新增无故障跳脸</font>",
 IsNormal = true,
 Visible = true,
 LockSize = true,
@@ -994,27 +994,14 @@ end
 end
 })
 
-local autoGlitchEnabled = false
-local autoGlitchConnection = nil
-Automation:AddToggle('AutoGlitch', {
-    Text = "自动故障",
-    Default = false,
+Automation:AddToggle('AutoGlitch',{
+Text = "自动故障",
+Default = false,
 Callback = function(Value)
-autoGlitchEnabled = Value
-if autoGlitchEnabled then
-autoGlitchConnection = RunService.Heartbeat:Connect(function()
-if autoGlitchEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-local character = LocalPlayer.Character
-local humanoidRootPart = character.HumanoidRootPart
-teleportPosition = humanoidRootPart.Position - Vector3.new(0, -10, 0)
-character:PivotTo(CFrame.new(teleportPosition))
-end
-end)
+if Value then
+LocalPlayer.Character.HumanoidRootPart.Position = LocalPlayer.Character.HumanoidRootPart.Position + Vector3.new(0, 20, 0)
 else
-if autoGlitchConnection then
-autoGlitchConnection:Disconnect()
-autoGlitchConnection = nil
-end
+LocalPlayer.Character.HumanoidRootPart.Position = LocalPlayer.Character.HumanoidRootPart.Position - Vector3.new(0, 20, 0)
 end
 end
 })
@@ -3048,55 +3035,9 @@ AddPlayerESP(player, player.Character, PlayersColor)
 end
 end
 end
-table.insert(Connections, RunService.RenderStepped:Connect(function()
-if Toggles.Players and Toggles.Players.Value then
-for character, data in pairs(PlayerESPObjects) do
-if data.Object and data.Object.CurrentSettings then
-data.Object.CurrentSettings.TextSize = ESPGlobalSettings.TextSize
-data.Object.CurrentSettings.FillTransparency = ESPGlobalSettings.FillTransparency
-data.Object.CurrentSettings.OutlineTransparency = ESPGlobalSettings.OutlineTransparency
-data.Object.CurrentSettings.Tracer.Enabled = ESPGlobalSettings.TracerEnabled
-data.Object.CurrentSettings.Tracer.Color = PlayersColor
-if not data.Player or not data.Player.Parent or not character or not character.Parent then
-RemovePlayerESP(character)
-else
-local displayName = data.Player.DisplayName or data.Player.Name
-if data.Object.CurrentSettings.Name ~= displayName then
-data.Object.CurrentSettings.Name = displayName
-if data.Object.GUI and data.Object.GUI.Txt then
-data.Object.GUI.Txt.Text = displayName
-end
-end
-end
-data.Object:Hide()
-data.Object:Show()
-end
-end
-end
-end))
 
 local GoldColor = Color3.new(1, 0.8, 0)
 local GoldESPObjects = {}
-ESP:AddToggle('GoldESP', {
-    Text = "金币",
-    Default = false,
-Callback = function(Value)
-if Value then
-ScanAndAddGoldESP()
-else
-ClearAllGoldESP()
-end
-end
-}):AddColorPicker('GoldColorPicker', {
-    Default = GoldColor,
-    Title = '金币颜色',
-    Transparency = 0,
-Callback = function(Value)
-GoldColor = Value
-Toggles.GoldESP:SetValue(false)
-Toggles.GoldESP:SetValue(true)
-end
-})
 local function AddGoldESP(goldPile)
 if not goldPile or not goldPile.Parent or GoldESPObjects[goldPile] then return end
 local goldValue = goldPile:GetAttribute("GoldValue") or 0
@@ -3186,6 +3127,26 @@ if GoldESPObjects[v] then
 RemoveGoldESP(v)
 end
 end))
+ESP:AddToggle('GoldESP', {
+    Text = "金币",
+    Default = false,
+Callback = function(Value)
+if Value then
+ScanAndAddGoldESP()
+else
+ClearAllGoldESP()
+end
+end
+}):AddColorPicker('GoldColorPicker', {
+    Default = GoldColor,
+    Title = '金币颜色',
+    Transparency = 0,
+Callback = function(Value)
+GoldColor = Value
+Toggles.GoldESP:SetValue(false)
+Toggles.GoldESP:SetValue(true)
+end
+})
 
 local ItemsColor = Color3.new(1, 0, 1)
 local ItemsESPObjects = {}
@@ -4819,6 +4780,17 @@ end
 end
 })
 
+Effect:AddToggle('AntiGlitch',{
+     Text = "无故障跳脸",
+     Default = false,
+     Callback = function(Value)
+local GlitchModule = ClientModules.EntityModules:FindFirstChild("Glitch") or ClientModules.EntityModules:FindFirstChild("_Glitch")
+if GlitchModule then
+GlitchModule.Name = Value and "_Glitch" or "Glitch"
+end
+end
+})
+
 Effect:AddToggle('AntiVoid', {
     Text = "无虚空跳脸",
     Default = false,
@@ -6022,11 +5994,6 @@ end
 
 LocalPlayer:SetAttribute("SapphireLoaded", nil)
 
-if autoGlitchConnection then
-autoGlitchConnection:Disconnect()
-autoGlitchConnection = nil
-end
-autoGlitchEnabled = false
 if Toggles.AutoGlitch and Toggles.AutoGlitch.Value then
 Toggles.AutoGlitch:SetValue(false)
 end
