@@ -278,7 +278,7 @@ SettingsBox = Tabs.UISettings:AddLeftGroupbox('UI','wrench')
 
 Tabs.Homepage:UpdateWarningBox({
 Title = "更新日志：",
-Text = "//Doors//\n<font color=\"rgb(73,230,133)\">新增生成Surge\n新增生成Bramble\n新增生成Groundskeeper/新增获取开发者选项</font>",
+Text = "//Doors//\n<font color=\"rgb(73,230,133)\">改进防 Gloom Egg\n修复无蜘蛛跳脸\n修复无虚空跳脸</font>",
 IsNormal = true,
 Visible = true,
 LockSize = true,
@@ -871,6 +871,7 @@ Callback = function(v)
 end
 })
 
+if Floor.Value == "Hotel" then
 local function GetLibraryPattern()
 local Paper = LocalPlayer.Character:FindFirstChild("LibraryHintPaper") 
 or LocalPlayer.Backpack:FindFirstChild("LibraryHintPaper") 
@@ -937,6 +938,7 @@ end
 end
 end
 end))
+end
 
 local Breaker = nil
 
@@ -953,6 +955,7 @@ Automation:AddToggle('AutoBreakerBox', {
     Default = false,
 Callback = function(Value)
 if Value then
+if Floor.Value == "Hotel" then
 for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
 if v.Name == "ElevatorBreaker" then
 Breaker = v
@@ -984,6 +987,7 @@ v:WaitForChild("Sound", 1e1).Playing = true
 end
 v:WaitForChild("PrismaticConstraint").TargetPosition = 0.2
 v.Material = Enum.Material.Glass
+end
 end
 end
 end
@@ -2333,11 +2337,13 @@ end
 end
 end
 end
+if Floor.Value == "Hotel" then
 if Toggles.AutoBreakerBox and Toggles.AutoBreakerBox.Value then
 if not Breaker or not Breaker.Parent then
 for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
 if v.Name == "ElevatorBreaker" then
 Breaker = v
+end
 end
 end
 end
@@ -4769,12 +4775,11 @@ local CutScenes = RemoteListener:FindFirstChild("Cutscenes") or RemoteListener:F
 CutScenes.Name = Value and "_Cutscenes" or "Cutscenes"
 end)
 
-Effect:AddToggle('AntiSpider', {
-    Text = "无蜘蛛跳脸",
-    Default = false,
+Effect:AddToggle('AntiSpider',{
+     Text = "无蜘蛛跳脸",
+     Default = false,
 Callback = function(Value)
-local SpiderModule = ClientModules.EntityModules:FindFirstChild("SpiderJumpscare") or 
-ClientModules.EntityModules:FindFirstChild("_SpiderJumpscare")
+local SpiderModule = Modules:FindFirstChild("SpiderJumpscare") or Modules:FindFirstChild("_SpiderJumpscare")
 if SpiderModule then
 SpiderModule.Name = Value and "_SpiderJumpscare" or "SpiderJumpscare"
 end
@@ -4796,17 +4801,9 @@ Effect:AddToggle('AntiVoid', {
     Text = "无虚空跳脸",
     Default = false,
 Callback = function(Value)
+local VoidModule = ClientModules.EntityModules:FindFirstChild("Void") or ClientModules.EntityModules:FindFirstChild("_Void")
 if VoidModule then
-if Value then
-if not VoidModule.originalStuff then
-VoidModule.originalStuff = VoidModule.stuff
-end
-VoidModule.stuff = function() end
-else
-if VoidModule.originalStuff then
-VoidModule.stuff = VoidModule.originalStuff
-end
-end
+VoidModule.Name = Value and "_Void" or "Void"
 end
 end
 })
@@ -5477,12 +5474,10 @@ end
 end
 end
 })
-table.insert(Connections, RunService.Heartbeat:Connect(function(dt)
+table.insert(Connections,workspace.DescendantAdded:Connect(function(v)
 if Toggles.AntiGloomPile and Toggles.AntiGloomPile.Value then
-for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
-if v.Name == "GloomEgg" then
-v:WaitForChild("Egg", 9e9).CanTouch = false
-end
+if v.Name == "Egg" then
+v.CanTouch = false
 end
 end
 end))
@@ -5599,21 +5594,21 @@ end
 })
 
 AdminPanel:AddButton({
-    Text = "生成Surge",
+    Text = "生成 Surge",
 Func = function()
 game:GetService("ReplicatedStorage").RemotesFolder.AdminPanelRunCommand:FireServer("Surge", {})
 end
 })
 
 AdminPanel:AddButton({
-    Text = "生成Bramble",
+    Text = "生成 Bramble",
 Func = function()
 game:GetService("ReplicatedStorage").RemotesFolder.AdminPanelRunCommand:FireServer("Bramble", {})
 end
 })
 
 AdminPanel:AddButton({
-    Text = "生成Groundskeeper",
+    Text = "生成 Groundskeeper",
 Func = function()
 game:GetService("ReplicatedStorage").RemotesFolder.AdminPanelRunCommand:FireServer("Groundskeeper", {})
 end
