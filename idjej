@@ -290,7 +290,7 @@ SettingsBox = Tabs.UISettings:AddLeftGroupbox('UI','wrench')
 
 Tabs.Homepage:UpdateWarningBox({
 Title = "更新日志：",
-Text = "//Doors//\n<font color=\"rgb(73,230,133)\">新增上帝模式\n新增飞哥上帝模式\n新增防香蕉\n新增防杰夫\n新增删除Seek\n新增无限复活</font>",
+Text = "//Doors//\n<font color=\"rgb(73,230,133)\">新增防 Lava\n新增防 ScaryWall</font>",
 IsNormal = true,
 Visible = true,
 LockSize = true,
@@ -5419,6 +5419,51 @@ end
 end
 end
 })
+end
+
+if Floor.Value == "Retro" then
+FloorAnti:AddToggle("AntiLava", {
+	Text = "防 Lava",
+	Default = false,
+	Callback = function(Value)
+for _, v in pairs(workspace.CurrentRooms:GetDescendants()) do
+if v.Name == "Lava" then
+v.CanTouch = false
+end
+end
+end
+})
+
+FloorAnti:AddToggle("AntiScaryWall", {
+	Text = "防 ScaryWall",
+	Default = false,
+	Callback = function(Value)
+for _, v in pairs(workspace.CurrentRooms:GetDescendants()) do
+if v.Name == "ScaryWall" then
+for _, part in pairs(v:GetChildren()) do
+if part:IsA("BasePart") then
+part.CanTouch = false
+end
+end
+end
+end
+end
+})
+workspace.DescendantAdded:Connect(function(inst)
+local name = inst.Name
+local parent = inst.Parent
+if name == "Lava" then
+inst.CanTouch = not Toggles.AntiLava.Value
+end
+if name == "ScaryWall" then
+task.wait()
+for _, p in ipairs(inst:GetChildren()) do
+if p:IsA("BasePart") then
+p.CanTouch = not Toggles.AntiScaryWall.Value
+end
+end
+end
+end)
 end
 
 local MaxSlopeAngle = 45
