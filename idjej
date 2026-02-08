@@ -122,6 +122,18 @@ end)
 end
 end)()
 
+function setcantouch(Part, Value)
+if Part:IsA("Model") then
+for _, v in ipairs(Part:GetChildren()) do
+if v:IsA("BasePart") then
+v.CanTouch = Value
+end
+end
+elseif Part:IsA("BasePart") then
+Part.CanTouch = Value
+end
+end
+
 local hubFolder = "Sapphire"
 local addonFolder = hubFolder.."/Addons"
 local UIStyleFile = hubFolder.."/UIStyle.txt"
@@ -278,7 +290,7 @@ SettingsBox = Tabs.UISettings:AddLeftGroupbox('UI','wrench')
 
 Tabs.Homepage:UpdateWarningBox({
 Title = "更新日志：",
-Text = "//Doors//\n<font color=\"rgb(73,230,133)\">改进防 Gloom Egg\n修复无蜘蛛跳脸\n修复无虚空跳脸</font>",
+Text = "//Doors//\n<font color=\"rgb(73,230,133)\">新增上帝模式\n新增飞哥上帝模式\n新增防香蕉\n新增防杰夫\n新增删除Seek\n新增无限复活</font>",
 IsNormal = true,
 Visible = true,
 LockSize = true,
@@ -323,34 +335,37 @@ Info:AddLabel("③群：<font color=\"rgb(173,216,230)\">1077974715</font>")
 Info:AddLabel("④群：<font color=\"rgb(173,216,230)\">1079930056</font>")
 
 
-Movement:AddToggle('SpeedBoost', {
-    Text = "移动速度",
-    Default = false,
-Callback = function(Value)
-if Character and Character.Humanoid then
-if Value then
-Character.Humanoid.WalkSpeed = Speed
-else
-Character.Humanoid.WalkSpeed = 16
-end
-end
-end
+Movement:AddToggle('SpeedBoost',{
+     Text = "移动速度",
+     Default = false
 })
 
 Speed = 15
+if ReplicatedStorage:FindFirstChild("RemotesFolder") then
 Movement:AddSlider("SpeedBoostSlider", {
-    Text = "移动速度值",
-    Default = 15,
-    Min = 15,
-    Max = 21,
-    Rounding = 1,
+        Text = "移动速度值",
+        Default = 15,
+        Min = 15,
+        Max = 21,
+        Rounding = 1,
 Callback = function(Value)
 Speed = Value
-if Toggles.SpeedBoost.Value and Character and Character.Humanoid then
-Character.Humanoid.WalkSpeed = Speed
-end
 end,      
 })
+end
+if Floor.Value == "Fools" then
+Movement:AddSlider("SpeedBoostSlider", {
+        Text = "移动速度值",
+        Default = 15,
+        Min = 15,
+        Max = 100,
+        Rounding = 1,
+Callback = function(Value)
+Speed = Value
+end,      
+})
+end
+
 
 LadderSpeedSlider = Movement:AddSlider("LadderSpeedBoost", {
     Text = "爬梯子加速",
@@ -871,7 +886,6 @@ Callback = function(v)
 end
 })
 
-if Floor.Value == "Hotel" then
 local function GetLibraryPattern()
 local Paper = LocalPlayer.Character:FindFirstChild("LibraryHintPaper") 
 or LocalPlayer.Backpack:FindFirstChild("LibraryHintPaper") 
@@ -938,7 +952,6 @@ end
 end
 end
 end))
-end
 
 local Breaker = nil
 
@@ -955,7 +968,6 @@ Automation:AddToggle('AutoBreakerBox', {
     Default = false,
 Callback = function(Value)
 if Value then
-if Floor.Value == "Hotel" then
 for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
 if v.Name == "ElevatorBreaker" then
 Breaker = v
@@ -996,9 +1008,16 @@ end
 end
 end
 end
-end
 })
+table.insert(Connections,LocalPlayer:GetAttributeChangedSignal("CurrentRoom"):Connect(function()
+if Toggles.AutoBreakerBox.Value then
+if v.Name == "ElevatorBreaker" then
+Breaker = v
+end
+end
+end))
 
+if ReplicatedStorage:FindFirstChild("RemotesFolder") then
 Automation:AddToggle('AutoGlitch',{
 Text = "自动故障",
 Default = false,
@@ -1010,6 +1029,7 @@ LocalPlayer.Character.HumanoidRootPart.Position = LocalPlayer.Character.Humanoid
 end
 end
 })
+end
 
 if Floor.Value == "Mines" then
 autoAnchorRunning = false
@@ -1309,6 +1329,7 @@ RemoteFolder.Crouch:FireServer(false)
 end
 end)
 
+if ReplicatedStorage:FindFirstChild("RemotesFolder") then
 Bypass:AddDropdown("SpeedBypassMethod", {
     Values = {"质量切换", "网络休眠"},
     Default = 1,
@@ -1592,6 +1613,7 @@ ChangedCallback = function(New)
 end
 })
 Bypass:AddDivider()
+end
 
 Bypass:AddToggle('UseToolsAnyWhere',{
      Text = "随处使用道具",
@@ -1605,6 +1627,7 @@ end
 end
 })
 
+if ReplicatedStorage:FindFirstChild("RemotesFolder") then
 local Disable3 = false
 local Prompt = Instance.new("ProximityPrompt", workspace)
 Prompt.Name = "TestPrompt"
@@ -2009,6 +2032,7 @@ Troll:AddToggle("Spamtoolz", {
     Text = "滥用他人工具", 
     NoUI = false, 
 })
+end
 
 Troll:AddToggle("StunPlayer", {
     Text = "眩晕",
@@ -2332,17 +2356,6 @@ if room:FindFirstChild("Door") and room.Door:FindFirstChild("Door") then
 local door = room.Door.Door
 if DoorESPObjects[door] then
 UpdateDoorESP(door, roomNumber)
-end
-end
-end
-end
-end
-if Floor.Value == "Hotel" then
-if Toggles.AutoBreakerBox and Toggles.AutoBreakerBox.Value then
-if not Breaker or not Breaker.Parent then
-for _, v in ipairs(workspace.CurrentRooms:GetDescendants()) do
-if v.Name == "ElevatorBreaker" then
-Breaker = v
 end
 end
 end
@@ -4291,6 +4304,7 @@ end
 end
 })
 
+if ReplicatedStorage:FindFirstChild("RemotesFolder") then
 local hidingTimeConnection = nil
 local hideMonsterHook = nil
 local hidingAttributeConnection = nil
@@ -4386,6 +4400,7 @@ currentHideDuration = nil
 end
 end
 })
+end
 
 Ambient:AddToggle('Fullbright', {
     Text = "全亮",
@@ -4917,6 +4932,7 @@ end
 end
 })
 
+if ReplicatedStorage:FindFirstChild("RemotesFolder") then
 local FakeSurge = Instance.new("RemoteEvent", ReplicatedStorage)
 FakeSurge.Name = "SurgeRemote"
 FloorAnti:AddToggle('AntiSurge', {
@@ -4932,8 +4948,9 @@ FakeSurge.Parent = ReplicatedStorage
 end
 end
 })
+end
 
-if Floor.Value == "Hotel" then
+if Floor.Value == "Hotel" or Floor.Value == "Fools" then
 local noPuzzleDoorsRunning = false
 local noPuzzleDoorsConnection = nil
 FloorAnti:AddToggle('NoPuzzleDoors', {
@@ -5270,6 +5287,136 @@ game.ReplicatedStorage.RemotesFolder.RequestAsset:InvokeServer("Remote")
 task.wait(0.1)
 end
 end)
+end
+})
+end
+
+if Floor.Value == "Fools" then
+FloorAnti:AddDivider()
+FloorAnti:AddToggle('Godmode',{
+Text = "上帝模式",
+Default = false,
+Callback = function(Value)
+if Value then
+if not Toggles.Noclip.Value then
+Toggles.Noclip:SetValue(true)
+end
+LocalPlayer.Character.Collision.Position = LocalPlayer.Character.Collision.Position - Vector3.new(0, 11, 0)
+else
+LocalPlayer.Character.Collision.Position = LocalPlayer.Character.Collision.Position + Vector3.new(0, 11, 0)
+end
+end
+}):AddKeyPicker('Godmode Keybind', {
+    Default = 'G', 
+    SyncToggleState = true,
+    Mode = 'Toggle',
+    Text = '上帝模式',
+    NoUI = false,
+    Callback = function(Value) end,
+    ChangedCallback = function(New) end
+})
+
+FloorAnti:AddToggle('FigureGodmode',{
+Text = "飞哥上帝模式",
+Default = false,
+Callback = function(Value)
+end
+})
+
+FloorAnti:AddToggle('AntiBanana',{
+Text = "防香蕉",
+Default = false,
+Callback = function(Value)
+for _, v in ipairs(workspace:GetChildren()) do
+if v.Name == "BananaPeel" then
+setcantouch(v, not Value)
+end
+end
+end
+})
+
+FloorAnti:AddToggle('AntiJeff',{
+Text = "防杰夫",
+Default = false,
+Callback = function(Value)
+for _, v in ipairs(workspace:GetChildren()) do
+if v.Name == "JeffTheKiller" then
+setcantouch(v, not Value)
+end
+end
+end
+})
+
+workspace.ChildAdded:Connect(function(v)
+if v.Name == "BananaPeel" then
+setcantouch(v, not Toggles.AntiBanana.Value)
+end
+if v.Name == "JeffTheKiller" then
+v.ChildAdded:Connect(function()
+for _, part in v:GetChildren() do
+if part:IsA("BasePart") then
+part.CanTouch = not Toggles.AntiJeff.Value 
+end
+end
+end)
+setcantouch(v,  not Toggles.AntiJeff.Value)
+end
+end)
+
+FloorAnti:AddToggle('DeleteSeek',{
+Text = "删除Seek",
+Default = false
+})
+task.spawn(function()
+while task.wait(0.09) do
+if Library.Unloaded then break end
+if Toggles.DeleteSeek.Value then
+local SeekCollision = workspace:FindFirstChild("TriggerEventCollision",true)
+local Trigger = workspace:FindFirstChild("TriggerSeek",true)
+if Trigger then
+Trigger:Destroy()
+end
+if SeekCollision then
+SeekCollision:ClearAllChildren()
+end
+end
+end
+end)
+
+FloorAnti:AddToggle('InfiniteRevive', {
+    Text = "无限复活",
+    Default = false,
+    Callback = function(Value)
+if Value then
+local RS = game:GetService("ReplicatedStorage")
+local Bricks = RS:FindFirstChild("Bricks")
+local EntityInfo = RS:FindFirstChild("EntityInfo")
+local function setupRevive(char)
+local hum = char:WaitForChild("Humanoid")
+hum.Died:Connect(function()
+if Toggles.InfiniteRevive.Value then
+if EntityInfo then
+EntityInfo.Revive:FireServer()
+elseif Bricks then
+Bricks:FireServer()
+end
+task.wait(0.5)
+if Toggles.InfiniteRevive.Value then
+setupRevive(LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait())
+end
+end
+end)
+end
+local charAddedConn = LocalPlayer.CharacterAdded:Connect(function(char)
+if Toggles.InfiniteRevive.Value then
+setupRevive(char)
+end
+end)
+table.insert(Connections, charAddedConn)
+if LocalPlayer.Character then
+setupRevive(LocalPlayer.Character)
+end
+end
 end
 })
 end
@@ -5648,6 +5795,17 @@ end
 end
 end
 
+if Toggles.FigureGodmode then
+local Figure = workspace:FindFirstChild("FigureRagdoll", true)
+if Figure then
+for _, v in Figure:GetChildren() do
+if v:IsA("BasePart") then
+v.CanTouch = not Toggles.FigureGodmode.Value
+end
+end
+end
+end
+
 if Toggles.NoCutscenes.Value then
 if (ReplicatedStorage.GameData.LatestRoom.Value > 89) then
 Toggles.NoCutscenes:SetValue(false)
@@ -5721,11 +5879,13 @@ end
 end
 
 if Toggles.AntiEyes.Value then
+if alive then
 if Workspace:FindFirstChild("Eyes") then
 if RemoteFolder.Name == "Bricks" or RemoteFolder.Name == "EntityInfo" then
 RemoteFolder.MotorReplication:FireServer(0, -100, 0, false)
 else
 RemoteFolder.MotorReplication:FireServer(-890)
+end
 end
 end
 end
