@@ -290,7 +290,7 @@ SettingsBox = Tabs.UISettings:AddLeftGroupbox('UI','wrench')
 
 Tabs.Homepage:UpdateWarningBox({
 Title = "更新日志：",
-Text = "//Doors//\n<font color=\"rgb(73,230,133)\">新增防 Lava\n新增防 ScaryWall</font>",
+Text = "//Doors//\n<font color=\"rgb(73,230,133)\">新增防杀手杰夫\n改进实体ESP\n修复Monument透视</font>",
 IsNormal = true,
 Visible = true,
 LockSize = true,
@@ -341,7 +341,6 @@ Movement:AddToggle('SpeedBoost',{
 })
 
 Speed = 15
-if ReplicatedStorage:FindFirstChild("RemotesFolder") then
 Movement:AddSlider("SpeedBoostSlider", {
         Text = "移动速度值",
         Default = 15,
@@ -352,20 +351,6 @@ Callback = function(Value)
 Speed = Value
 end,      
 })
-end
-if Floor.Value == "Fools" then
-Movement:AddSlider("SpeedBoostSlider", {
-        Text = "移动速度值",
-        Default = 15,
-        Min = 15,
-        Max = 100,
-        Rounding = 1,
-Callback = function(Value)
-Speed = Value
-end,      
-})
-end
-
 
 LadderSpeedSlider = Movement:AddSlider("LadderSpeedBoost", {
     Text = "爬梯子加速",
@@ -717,8 +702,8 @@ end
     Mode = 'Toggle',
     Text = '飞行',
     NoUI = false,
-    Callback = function(Value) end,
-    ChangedCallback = function(New) end
+Callback = function(Value) end,
+ChangedCallback = function(New) end
 })
 FlySpeed = Movement:AddSlider("FlySpeed", {
     Text = "飞行速度",
@@ -793,8 +778,8 @@ Automation:AddToggle('AutoCloset',{
     Mode = 'Toggle',
     Text = '自动躲藏',
     NoUI = false,
-    Callback = function(Value) end,
-    ChangedCallback = function(New) end
+Callback = function(Value) end,
+ChangedCallback = function(New) end
 })
 local EntitysTable = {
     RushMoving = 85,
@@ -3479,22 +3464,6 @@ end))
 
 local EntityColor = Color3.new(1, 0, 0)
 local EntityESPObjects = {}
-local EntityMap = {
-    RushMoving = "Rush",
-    AmbushMoving = "Ambush",
-    GlitchRush = "GlitchRush",
-    GlitchAmbush = "GlitchAmbush",
-    A60 = "A-60",
-    A120 = "A-120",
-    Eyes = "Eyes",
-    BackdoorLookman = "Lookman",
-    BackdoorRush = "Blitz",
-    Groundskeeper = "Groundskeeper",
-    MonumentEntity = "Monument",
-    FigureRig = "Figure",
-    FigureRagdoll = "Figure",
-    LiveEntityBramble = "Bramble"
-}
 local function addEntityESP(entity, label)
 if not entity or not entity.Parent then return end
 local base = entity.PrimaryPart
@@ -3540,111 +3509,79 @@ EntityESPObjects[entity]:Destroy()
 EntityESPObjects[entity] = nil
 end
 end
-local function scanAndAddEntityESP()
-for _, entity in ipairs(workspace:GetChildren()) do
-local label = EntityMap[entity.Name]
-if label then
-addEntityESP(entity, label)
-end
-end
-local currentRoom = LocalPlayer:GetAttribute("CurrentRoom")
-if currentRoom then
-local room = workspace.CurrentRooms:FindFirstChild(tostring(currentRoom))
-if room then
-local groundskeeper = room:FindFirstChild("Groundskeeper", true)
-if groundskeeper then
-addEntityESP(groundskeeper, "Groundskeeper")
-end
-local figure = room:FindFirstChild("FigureRig", true) or room:FindFirstChild("FigureRagdoll", true)
-if figure then
-addEntityESP(figure, "Figure")
-end
-local bramble = room:FindFirstChild("LiveEntityBramble", true)
-if bramble then
-addEntityESP(bramble, "Bramble")
-end
-for _, descendant in ipairs(room:GetDescendants()) do
-local label = EntityMap[descendant.Name]
-if label then
-addEntityESP(descendant, label)
-end
-end
-end
-end
-for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-for _, descendant in ipairs(room:GetDescendants()) do
-local label = EntityMap[descendant.Name]
-if label and not EntityESPObjects[descendant] then
-addEntityESP(descendant, label)
-end
-end
-end
-end
 local function clearAllEntityESP()
 for entity, espObject in pairs(EntityESPObjects) do
-if espObject then
-espObject:Destroy()
-end
+if espObject then espObject:Destroy() end
 end
 EntityESPObjects = {}
 end
-ESP:AddToggle('EntitiesESP',{
-     Text = "实体",
-     Default = false,
+local function processEntity(v)
+if Toggles.EntitiesESP.Value then
+if v.Name == "RushMoving" then addEntityESP(v, "Rush") end
+if v.Name == "AmbushMoving" then addEntityESP(v, "Ambush") end
+if v.Name == "GlitchRush" then addEntityESP(v, "GlitchRush") end
+if v.Name == "GlitchAmbush" then addEntityESP(v, "GlitchAmbush") end
+if v.Name == "A60" then addEntityESP(v, "A-60") end
+if v.Name == "A120" then addEntityESP(v, "A-120") end
+if v.Name == "Eyes" then addEntityESP(v, "Eyes") end
+if v.Name == "BackdoorLookman" then addEntityESP(v, "Lookman") end
+if v.Name == "BackdoorRush" then addEntityESP(v, "Blitz") end
+if v.Name == "Groundskeeper" then addEntityESP(v, "Groundskeeper") end
+if v.Name == "MonumentEntity" then addEntityESP(v:FindFirstChild("Top"), "Monument") end
+if v.Name == "FigureRig" or v.Name == "FigureRagdoll" then addEntityESP(v, "Figure") end
+if v.Name == "LiveEntityBramble" then addEntityESP(v, "Bramble") end
+end
+end
+ESP:AddToggle('EntitiesESP', {
+    Text = "实体",
+    Default = false,
 Callback = function(Value)
 if Value then
-scanAndAddEntityESP()
+for _, entity in ipairs(workspace:GetChildren()) do processEntity(entity) end
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+for _, descendant in ipairs(room:GetDescendants()) do processEntity(descendant) end
+end
 else
 clearAllEntityESP()
 end
 end
 }):AddColorPicker('EntityColorPicker', {
-     Default = EntityColor,
-     Title = '实体颜色',
-     Transparency = 0,
+    Default = EntityColor,
+    Title = '实体颜色',
+    Transparency = 0,
 Callback = function(Value)
 EntityColor = Value
 Toggles.EntitiesESP:SetValue(false)
 Toggles.EntitiesESP:SetValue(true)
 end
 })
-table.insert(Connections, workspace.ChildAdded:Connect(function(v)
-if Toggles.EntitiesESP and Toggles.EntitiesESP.Value then
-local label = EntityMap[v.Name]
-if label then
+table.insert(Connections, workspace.ChildAdded:Connect(function(v) 
+if Toggles.EntitiesESP and Toggles.EntitiesESP.Value then 
 task.wait(0.5)
-addEntityESP(v, label)
-end
-end
+processEntity(v) 
+end 
 end))
-table.insert(Connections, workspace.ChildRemoved:Connect(function(v)
-if EntityESPObjects[v] then
-removeEntityESP(v)
-end
+table.insert(Connections, workspace.ChildRemoved:Connect(function(v) 
+removeEntityESP(v) 
 end))
 table.insert(Connections, LocalPlayer:GetAttributeChangedSignal("CurrentRoom"):Connect(function()
 if Toggles.EntitiesESP and Toggles.EntitiesESP.Value then
 for entity, espObject in pairs(EntityESPObjects) do
-if entity:IsDescendantOf(workspace.CurrentRooms) then
-removeEntityESP(entity)
+if entity:IsDescendantOf(workspace.CurrentRooms) then removeEntityESP(entity) end
 end
+for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
+for _, descendant in ipairs(room:GetDescendants()) do processEntity(descendant) end
 end
-scanAndAddEntityESP()
 end
 end))
 table.insert(Connections, workspace.DescendantAdded:Connect(function(v)
 if Toggles.EntitiesESP and Toggles.EntitiesESP.Value then
 task.wait(0.1)
-local label = EntityMap[v.Name]
-if label and v:IsDescendantOf(workspace.CurrentRooms) then
-addEntityESP(v, label)
-end
+if v:IsDescendantOf(workspace.CurrentRooms) then processEntity(v) end
 end
 end))
 table.insert(Connections, workspace.DescendantRemoving:Connect(function(v)
-if EntityESPObjects[v] then
 removeEntityESP(v)
-end
 end))
 
 NotifyBox:AddDropdown("EntitiesPicker", {
@@ -5293,6 +5230,10 @@ end
 
 if Floor.Value == "Fools" then
 FloorAnti:AddDivider()
+
+Options.FlySpeed:SetMax(100)
+Options.SpeedBoostSlider:SetMax(100)
+
 FloorAnti:AddToggle('Godmode',{
 Text = "上帝模式",
 Default = false,
@@ -5334,34 +5275,6 @@ end
 end
 end
 })
-
-FloorAnti:AddToggle('AntiJeff',{
-Text = "防杰夫",
-Default = false,
-Callback = function(Value)
-for _, v in ipairs(workspace:GetChildren()) do
-if v.Name == "JeffTheKiller" then
-setcantouch(v, not Value)
-end
-end
-end
-})
-
-workspace.ChildAdded:Connect(function(v)
-if v.Name == "BananaPeel" then
-setcantouch(v, not Toggles.AntiBanana.Value)
-end
-if v.Name == "JeffTheKiller" then
-v.ChildAdded:Connect(function()
-for _, part in v:GetChildren() do
-if part:IsA("BasePart") then
-part.CanTouch = not Toggles.AntiJeff.Value 
-end
-end
-end)
-setcantouch(v,  not Toggles.AntiJeff.Value)
-end
-end)
 
 FloorAnti:AddToggle('DeleteSeek',{
 Text = "删除Seek",
@@ -5686,6 +5599,18 @@ part.CanTouch = not Value
 part.CanCollide = Value
 end
 end
+end
+end
+end
+})
+
+ModifiersBox:AddToggle('AntiJeff',{
+Text = "防杀手杰夫",
+Default = false,
+Callback = function(Value)
+for _, v in ipairs(workspace:GetChildren()) do
+if v.Name == "JeffTheKiller" then
+setcantouch(v, not Value)
 end
 end
 end
@@ -6127,6 +6052,21 @@ end
 end
 end))
 
+workspace.ChildAdded:Connect(function(v)
+if v.Name == "BananaPeel" then
+setcantouch(v, not Toggles.AntiBanana.Value)
+end
+if v.Name == "JeffTheKiller" then
+v.ChildAdded:Connect(function()
+for _, part in v:GetChildren() do
+if part:IsA("BasePart") then
+part.CanTouch = not Toggles.AntiJeff.Value 
+end
+end
+end)
+setcantouch(v,  not Toggles.AntiJeff.Value)
+end
+end)
 
 table.insert(Connections, workspace.DescendantAdded:Connect(function(v)
 local Delay = math.random(200, 270) / 1000
