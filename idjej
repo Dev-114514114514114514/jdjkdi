@@ -3532,7 +3532,7 @@ local EntityColor = Color3.new(1, 0, 0)
 local EntityESPObjects = {}
 local function addEntityESP(entity, label)
 if not entity or not entity.Parent then return end
-local base = entity.PrimaryPart
+base = entity:FindFirstChildWhichIsA("BasePart")
 if not base then return end
 if not entity:FindFirstChildOfClass("Humanoid") then
 local humanoid = Instance.new("Humanoid")
@@ -3637,14 +3637,14 @@ if room then
 local groundskeeper = room:FindFirstChild("Groundskeeper", true)
 if groundskeeper then
 addEntityESP(groundskeeper, "Groundskeeper")
+end
 local Figure = room:FindFirstChild("FigureRig", true) or room:FindFirstChild("FigureRagdoll", true)
 if Figure then
 addEntityESP(Figure, "Figure")
+end
 local Bramble = room:FindFirstChild("LiveEntityBramble", true)
 if Bramble then
 addEntityESP(Bramble, "Bramble")
-end
-end
 end
 end
 end
