@@ -290,7 +290,7 @@ SettingsBox = Tabs.UISettings:AddLeftGroupbox('UI','wrench')
 
 Tabs.Homepage:UpdateWarningBox({
 Title = "更新日志：",
-Text = "//Doors//\n<font color=\"rgb(73,230,133)\">新增掉落物传送\n新增环绕速度\n新增环绕范围\n改进自动断路器箱</font>",
+Text = "//Doors//\n<font color=\"rgb(73,230,133)\">改进实体ESP\n修复Grumble透视</font>",
 IsNormal = true,
 Visible = true,
 LockSize = true,
@@ -3533,10 +3533,7 @@ local EntityESPObjects = {}
 local function addEntityESP(entity, label)
 if not entity or not entity.Parent then return end
 local base = entity.PrimaryPart
-if not base then
-base = entity:FindFirstChildWhichIsA("BasePart")
 if not base then return end
-end
 if not entity:FindFirstChildOfClass("Humanoid") then
 local humanoid = Instance.new("Humanoid")
 humanoid.Name = "ESP_Humanoid"
@@ -3596,6 +3593,7 @@ if v.Name == "Groundskeeper" then addEntityESP(v, "Groundskeeper") end
 if v.Name == "MonumentEntity" then addEntityESP(v:FindFirstChild("Top"), "Monument") end
 if v.Name == "FigureRig" or v.Name == "FigureRagdoll" then addEntityESP(v, "Figure") end
 if v.Name == "LiveEntityBramble" then addEntityESP(v, "Bramble") end
+if v.Name == "GrumbleRig" then addEntityESP(v, "Grumble") end
 end
 end
 ESP:AddToggle('EntitiesESP', {
@@ -3632,11 +3630,23 @@ removeEntityESP(v)
 end))
 table.insert(Connections, LocalPlayer:GetAttributeChangedSignal("CurrentRoom"):Connect(function()
 if Toggles.EntitiesESP and Toggles.EntitiesESP.Value then
-for entity, espObject in pairs(EntityESPObjects) do
-if entity:IsDescendantOf(workspace.CurrentRooms) then removeEntityESP(entity) end
+local currentRoomNum = LocalPlayer:GetAttribute("CurrentRoom")
+if currentRoomNum then
+local room = workspace.CurrentRooms:FindFirstChild(tostring(currentRoomNum))
+if room then
+local groundskeeper = room:FindFirstChild("Groundskeeper", true)
+if groundskeeper then
+addEntityESP(groundskeeper, "Groundskeeper")
+local Figure = room:FindFirstChild("FigureRig", true) or room:FindFirstChild("FigureRagdoll", true)
+if Figure then
+addEntityESP(Figure, "Figure")
+local Bramble = room:FindFirstChild("LiveEntityBramble", true)
+if Bramble then
+addEntityESP(Bramble, "Bramble")
 end
-for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-for _, descendant in ipairs(room:GetDescendants()) do processEntity(descendant) end
+end
+end
+end
 end
 end
 end))
