@@ -193,7 +193,7 @@ Library:Notify("正在加载 Sapphire | Doors",5)
 
 Window = Library:CreateWindow({
 Title = '💎 Sapphire V2',
-Footer = "楼层："..Floor.Value.." | 版本：2.0.0",
+Footer = "楼层："..Floor.Value.." | 版本：2.0.1",
 Center = true,
 NotifySide = "Right",
 AutoShow = true
@@ -290,7 +290,7 @@ SettingsBox = Tabs.UISettings:AddLeftGroupbox('UI','wrench')
 
 Tabs.Homepage:UpdateWarningBox({
 Title = "更新日志：",
-Text = "//Doors//\n<font color=\"rgb(73,230,133)\">改进金币ESP\n移除无谜题门（仅Hotel+）</font>",
+Text = "//Doors//\n<font color=\"rgb(73,230,133)\">改进ESP\n新增启用滑铲</font>",
 IsNormal = true,
 Visible = true,
 LockSize = true,
@@ -472,6 +472,18 @@ end
 end
 end))
 
+Movement:AddToggle('EnableSlide', {
+    Text = "启用滑铲",
+    Default = false
+})
+Toggles.EnableSlide:OnChanged(function(Value)
+if Character then
+Character:SetAttribute("CanSlide", Value)
+end
+end)
+if LocalPlayer.Character and Toggles.EnableSlide and Toggles.EnableSlide.Value then
+LocalPlayer.Character:SetAttribute("CanSlide", true)
+end
 
 Movement:AddToggle('Noacceleration', {
     Text = "无加速度",
@@ -2589,7 +2601,7 @@ Callback = function(Value)
 if Value then
 local currentRoom = LocalPlayer:GetAttribute("CurrentRoom")
 if not currentRoom then return end
-local roomsToCheck = {currentRoom, currentRoom + 1}
+local roomsToCheck = {currentRoom}
 for _, roomNumber in ipairs(roomsToCheck) do
 local room = workspace.CurrentRooms:FindFirstChild(tostring(roomNumber))
 if room then
@@ -2712,7 +2724,7 @@ local parent = v.Parent
 while parent do
 if parent:IsDescendantOf(workspace.CurrentRooms) then
 local roomNumber = tonumber(parent.Name)
-if roomNumber and (roomNumber == currentRoom or roomNumber == currentRoom + 1) then
+if roomNumber and (roomNumber == currentRoom) then
 inValidRoom = true
 break
 end
@@ -2766,7 +2778,7 @@ local HidingSpotESPObjects = {}
 local function shouldShowHidingSpotESP(roomNumber)
 local currentRoom = LocalPlayer:GetAttribute("CurrentRoom")
 if not currentRoom then return false end
-return roomNumber == currentRoom or roomNumber == currentRoom + 1
+return roomNumber == currentRoom
 end
 local function AddHidingSpotESP(model, text)
 if not model or not model.Parent or HidingSpotESPObjects[model] then return end
@@ -2881,7 +2893,7 @@ local ChestESPObjects = {}
 local function shouldShowChestESP(roomNumber)
 local currentRoom = LocalPlayer:GetAttribute("CurrentRoom")
 if not currentRoom then return false end
-return roomNumber == currentRoom or roomNumber == currentRoom + 1
+return roomNumber == currentRoom
 end
 local function AddChestESP(model, text, color)
 if not model or not model.Parent or ChestESPObjects[model] then return end
@@ -3145,14 +3157,13 @@ GoldESPObjects[goldPile] = nil
 end
 end
 local function ScanAndAddGoldESP()
-for _, room in ipairs(workspace.CurrentRooms:GetChildren()) do
-local roomNumber = tonumber(room.Name)
-if roomNumber and shouldShowESP(roomNumber) then
-for _, goldPile in ipairs(room:GetDescendants()) do
+local currentRoomNum = LocalPlayer:GetAttribute("CurrentRoom")
+if not currentRoomNum then return end
+local currentRoom = workspace.CurrentRooms:FindFirstChild(tostring(currentRoomNum))
+if not currentRoom then return end
+for _, goldPile in ipairs(currentRoom:GetDescendants()) do
 if goldPile.Name == "GoldPile" then
 AddGoldESP(goldPile)
-end
-end
 end
 end
 end
@@ -3167,7 +3178,7 @@ end
 local function shouldShowESP(roomNumber)
 local currentRoom = LocalPlayer:GetAttribute("CurrentRoom")
 if not currentRoom then return false end
-return roomNumber == currentRoom or roomNumber == currentRoom + 1
+return roomNumber == currentRoom
 end
 table.insert(Connections, LocalPlayer:GetAttributeChangedSignal("CurrentRoom"):Connect(function()
 if Toggles.GoldESP and Toggles.GoldESP.Value then
@@ -3392,7 +3403,7 @@ end
 table.insert(Connections, LocalPlayer:GetAttributeChangedSignal("CurrentRoom"):Connect(function()
 if Toggles.Items and Toggles.Items.Value then
 ClearAllItemsESP()
-task.wait(0.5)
+task.wait(0.1)
 ScanAndAddItemsESP()
 end
 end))
@@ -3423,7 +3434,7 @@ local StardustESPObjects = {}
 local function shouldShowESP(roomNumber)
 local currentRoom = LocalPlayer:GetAttribute("CurrentRoom")
 if not currentRoom then return false end
-return roomNumber == currentRoom or roomNumber == currentRoom + 1
+return roomNumber == currentRoom
 end
 local function AddStardustESP(stardust)
 if not stardust or not stardust.Parent or StardustESPObjects[stardust] then return end
