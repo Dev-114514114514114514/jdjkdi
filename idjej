@@ -193,7 +193,7 @@ Library:Notify("正在加载 Sapphire | Doors",5)
 
 Window = Library:CreateWindow({
 Title = '💎 Sapphire V2',
-Footer = "楼层："..Floor.Value.." | 版本：2.0.1",
+Footer = "楼层："..Floor.Value.." | 版本：2.0.2",
 Center = true,
 NotifySide = "Right",
 AutoShow = true
@@ -290,7 +290,7 @@ SettingsBox = Tabs.UISettings:AddLeftGroupbox('UI','wrench')
 
 Tabs.Homepage:UpdateWarningBox({
 Title = "更新日志：",
-Text = "//Doors//\n<font color=\"rgb(73,230,133)\">改进ESP\n新增启用滑铲</font>",
+Text = "//Doors//\n<font color=\"rgb(73,230,133)\">改进自动互动</font>",
 IsNormal = true,
 Visible = true,
 LockSize = true,
@@ -6080,7 +6080,9 @@ Base = prompt.Parent.Parent:FindFirstChildOfClass("BasePart")
 end
 end
 if Base and (LocalPlayer.Character.HumanoidRootPart.Position - Base.Position).Magnitude < prompt.MaxActivationDistance then
+local Skip = false
 if not (isMinesGateButton or isFusesPrompt) then
+if not Skip then
 local isTrickOrTreat = false
 if prompt.Name == "ActivateEventPrompt" then
 local parent = prompt.Parent
@@ -6092,42 +6094,45 @@ end
 end
 end
 if isTrickOrTreat then
-return
-end
-if prompt.Parent and prompt.Parent.Name == "GlitchCube" and Options.IgnoreList and Options.IgnoreList.Value["故障方块"] then
-return
-end
-if prompt.Parent and prompt.Parent.Name == "GoldPile" and Options.IgnoreList and Options.IgnoreList.Value["金币"] then 
-return 
-end
-if prompt.Name == "ModulePrompt" and prompt.Parent and prompt.Parent.Name == "Candy" and Options.IgnoreList and Options.IgnoreList.Value["糖果"] then
-return
-end
-if prompt.Parent:GetAttribute("JeffShop") and Options.IgnoreList and Options.IgnoreList.Value["Jeff物品"] then 
-return 
-end
-if prompt.Parent.Parent and prompt.Parent.Parent.Name == "Drops" and Options.IgnoreList and Options.IgnoreList.Value["丢弃物品"] then 
-return 
-end
-if prompt.Parent and prompt.Parent.Name == "Candy" and prompt.Parent:GetAttribute("Tool_CandyID") == "CandyRed" and Options.IgnoreList and Options.IgnoreList.Value["死亡糖果"] then
-return
-end
-if prompt.Name == "ModulePrompt" and prompt.Parent and prompt.Parent.Name == "Hole" then 
-return 
-end
-if prompt.Name == "ModulePrompt" and prompt.Parent and prompt.Parent.Name == "Mandrake" then 
-return 
-end
-if prompt.Parent and prompt.Parent.Name == "Padlock" then 
-return 
-end
-if prompt.Parent and prompt.Parent.Name == "KeyObtainFake" then 
-return 
+Skip = true
 end
 end
+if not Skip and prompt.Parent and prompt.Parent.Name == "GlitchCube" and Options.IgnoreList and Options.IgnoreList.Value["故障方块"] then
+Skip = true
+end
+if not Skip and prompt.Parent and prompt.Parent.Name == "GoldPile" and Options.IgnoreList and Options.IgnoreList.Value["金币"] then 
+Skip = true
+end
+if not Skip and prompt.Name == "ModulePrompt" and prompt.Parent and prompt.Parent.Name == "Candy" and Options.IgnoreList and Options.IgnoreList.Value["糖果"] then
+Skip = true
+end
+if not Skip and prompt.Parent:GetAttribute("JeffShop") and Options.IgnoreList and Options.IgnoreList.Value["Jeff物品"] then 
+Skip = true
+end
+if not Skip and prompt.Parent.Parent and prompt.Parent.Parent.Name == "Drops" and Options.IgnoreList and Options.IgnoreList.Value["丢弃物品"] then 
+Skip = true
+end
+if not Skip and prompt.Parent and prompt.Parent.Name == "Candy" and prompt.Parent:GetAttribute("Tool_CandyID") == "CandyRed" and Options.IgnoreList and Options.IgnoreList.Value["死亡糖果"] then
+Skip = true
+end
+if not Skip and prompt.Name == "ModulePrompt" and prompt.Parent and prompt.Parent.Name == "Hole" then 
+Skip = true
+end
+if not Skip and prompt.Name == "ModulePrompt" and prompt.Parent and prompt.Parent.Name == "Mandrake" then 
+Skip = true
+end
+if not Skip and prompt.Parent and prompt.Parent.Name == "Padlock" then 
+Skip = true
+end
+if not Skip and prompt.Parent and prompt.Parent.Name == "KeyObtainFake" then 
+Skip = true
+end
+end
+if not Skip then
 if prompt.ClickablePrompt then
 if prompt:IsA("ProximityPrompt") then
 fireproximityprompt(prompt)
+end
 end
 end
 end
