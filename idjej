@@ -193,7 +193,7 @@ Library:Notify("正在加载 Sapphire | Doors",5)
 
 Window = Library:CreateWindow({
 Title = '💎 Sapphire V2',
-Footer = "楼层："..Floor.Value.." | 版本：2.0.2",
+Footer = "楼层："..Floor.Value.." | 版本：2.0.3",
 Center = true,
 NotifySide = "Right",
 AutoShow = true
@@ -290,7 +290,7 @@ SettingsBox = Tabs.UISettings:AddLeftGroupbox('UI','wrench')
 
 Tabs.Homepage:UpdateWarningBox({
 Title = "更新日志：",
-Text = "//Doors//\n<font color=\"rgb(73,230,133)\">改进自动互动</font>",
+Text = "//Doors//\n<font color=\"rgb(73,230,133)\">修复Bug\n改进门ESP</font>",
 IsNormal = true,
 Visible = true,
 LockSize = true,
@@ -1030,97 +1030,6 @@ end
 })
 end
 
-if Floor.Value == "Mines" then
-autoAnchorRunning = false
-autoAnchorConnection = nil
-lastCheck = 0
-checkInterval = 0.5
-cachedAnchors = {}
-local function updateAnchorCache()
-cachedAnchors = {}
-room50 = workspace.CurrentRooms:FindFirstChild("50")
-if not room50 then 
-for roomName, room in pairs(workspace.CurrentRooms:GetChildren()) do
-if tonumber(roomName) and tonumber(roomName) >= 50 then
-room50 = room
-break
-end
-end
-end
-if room50 then
-for _, anchor in ipairs(room50:GetDescendants()) do
-if anchor.Name == "MinesAnchor" then
-table.insert(cachedAnchors, anchor)
-end
-end
-end
-end
-local function solveAnchor()
-if not autoAnchorRunning then return end
-playerGui = LocalPlayer:WaitForChild("PlayerGui")
-mainUI = playerGui:WaitForChild("MainUI")
-AnchorHintFrame = mainUI:FindFirstChild("AnchorHintFrame")
-if not AnchorHintFrame then return end
-anchorSignText = AnchorHintFrame:FindFirstChild("AnchorCode")
-currentCode = AnchorHintFrame:FindFirstChild("Code")
-if not anchorSignText or not currentCode then return end
-signText = anchorSignText.Text
-codeText = currentCode.Text
-if signText == "" or codeText == "" then return end
-playerPosition = LocalPlayer.Character and 
-LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and 
-LocalPlayer.Character.HumanoidRootPart.Position
-if not playerPosition then return end
-for _, anchor in ipairs(cachedAnchors) do
-if not autoAnchorRunning then break end
-sign = anchor:FindFirstChild("Sign")
-if sign then
-textLabel = sign:FindFirstChild("TextLabel")
-if textLabel and textLabel.Text == signText then
-anchorPosition = anchor.PrimaryPart and anchor.PrimaryPart.Position or
-(anchor:FindFirstChildWhichIsA("BasePart") and anchor:FindFirstChildWhichIsA("BasePart").Position)
-if anchorPosition then
-distance = (playerPosition - anchorPosition).Magnitude
-if distance < 12 then
-anchorRemote = anchor:FindFirstChild("AnchorRemote")
-if anchorRemote then
-pcall(function()
-anchorRemote:InvokeServer(codeText)
-end)
-end
-break
-end
-end
-end
-end
-end
-end
-Automation:AddToggle('AutoAnchorSolver', {
-    Text = "自动密码机",
-    Default = false,
-Callback = function(Value)
-if Value then
-autoAnchorRunning = true
-updateAnchorCache()
-autoAnchorConnection = game:GetService("RunService").Heartbeat:Connect(function()
-if not autoAnchorRunning then return end
-now = tick()
-if now - lastCheck >= checkInterval then
-lastCheck = now
-solveAnchor()
-end
-end)
-else
-autoAnchorRunning = false
-if autoAnchorConnection then
-autoAnchorConnection:Disconnect()
-autoAnchorConnection = nil
-end
-end
-end
-})
-end
-
 ReachBox:AddToggle('DoorReach',{
      Text = "延长开门",
      Default = false
@@ -1655,6 +1564,7 @@ local ShearsNames = {
 SkullPrompt = true 
 }
 local function isLockpickRelatedPrompt(v, validParents, validNames)
+if not v or not v.Parent then return false end
 if validParents[v.Parent.Name] or validNames[v.Name] then
 return true
 end
@@ -2244,7 +2154,7 @@ end
 local displayText = "门 " .. (door.Parent:GetAttribute("RoomID") or roomNumber)
 local currentRoom = LocalPlayer:GetAttribute("CurrentRoom")
 local isLocked = false
-local isOpen = not door.Anchored
+local isOpen = door.Parent:GetAttribute("Opened") == true
 if roomNumber == currentRoom then
 if door.Parent:FindFirstChild("Lock") then
 isLocked = true
@@ -2313,7 +2223,7 @@ if not DoorESPObjects[door] then return end
 local displayText = "门 " .. (door.Parent:GetAttribute("RoomID") or roomNumber)
 local currentRoom = LocalPlayer:GetAttribute("CurrentRoom")
 local isLocked = false
-local isOpen = not door.Anchored
+local isOpen = door.Parent:GetAttribute("Opened") == true
 if roomNumber == currentRoom then
 if door.Parent:FindFirstChild("Lock") then
 isLocked = true
@@ -2609,11 +2519,9 @@ local key = room:FindFirstChild("KeyObtain", true)
 if key and not key:GetAttribute("Used") then
 AddTaskESP(key, "钥匙", TaskColor)
 end
-if Floor.Value == "Mines" then
 for _, fuse in ipairs(room:GetDescendants()) do
 if fuse.Name == "FuseObtain" and fuse.Parent and fuse.Parent.Name == "FuseHolder" then
 AddTaskESP(fuse, "保险丝", TaskColor)
-end
 end
 end
 if roomNumber == currentRoom then
@@ -2637,14 +2545,12 @@ AddTaskESP(anchor, "锚 " .. anchor.Sign.TextLabel.Text, TaskColor)
 end
 end
 end
-if Floor.Value == "Mines" then
 for _, generator in ipairs(room:GetDescendants()) do
 if generator.Name == "GeneratorMain" then
 AddTaskESP(generator, "发电机", TaskColor)
 end
 end
-end
-if Floor.Value == "Mines" and roomNumber == currentRoom then
+if roomNumber == currentRoom then
 for _, button in ipairs(room:GetDescendants()) do
 if button.Name == "MinesGateButton" then
 AddTaskESP(button, "门按钮", TaskColor)
@@ -2660,7 +2566,7 @@ end
 end
 local timerLever = room:FindFirstChild("TimerLever", true)
 if timerLever and timerLever.Name == "TimerLever" then
-AddTaskESP(timerLever, "倒计时拉杆", TaskColor)
+AddTaskESP(timerLever, "计时器拉杆", TaskColor)
 end
 for _, lever in ipairs(room:GetDescendants()) do
 if lever.Name == "LeverForGate" then
@@ -2747,7 +2653,7 @@ AddTaskESP(v, "发电机", TaskColor)
 elseif v.Name == "KeyObtain" and not v:GetAttribute("Used") then
 AddTaskESP(v, "钥匙", TaskColor)
 elseif v.Name == "TimerLever" then
-AddTaskESP(v, "倒计时拉杆", TaskColor)
+AddTaskESP(v, "计时器拉杆", TaskColor)
 elseif v.Name == "LeverForGate" then
 AddTaskESP(v, "门拉杆", TaskColor)
 elseif v.Name == "MinesGateButton" then
@@ -5497,6 +5403,95 @@ end)
 Other:AddDivider()
 
 if Floor.Value == "Mines" then
+autoAnchorRunning = false
+autoAnchorConnection = nil
+lastCheck = 0
+checkInterval = 0.5
+cachedAnchors = {}
+local function updateAnchorCache()
+cachedAnchors = {}
+room50 = workspace.CurrentRooms:FindFirstChild("50")
+if not room50 then 
+for roomName, room in pairs(workspace.CurrentRooms:GetChildren()) do
+if tonumber(roomName) and tonumber(roomName) >= 50 then
+room50 = room
+break
+end
+end
+end
+if room50 then
+for _, anchor in ipairs(room50:GetDescendants()) do
+if anchor.Name == "MinesAnchor" then
+table.insert(cachedAnchors, anchor)
+end
+end
+end
+end
+local function solveAnchor()
+if not autoAnchorRunning then return end
+playerGui = LocalPlayer:WaitForChild("PlayerGui")
+mainUI = playerGui:WaitForChild("MainUI")
+AnchorHintFrame = mainUI:FindFirstChild("AnchorHintFrame")
+if not AnchorHintFrame then return end
+anchorSignText = AnchorHintFrame:FindFirstChild("AnchorCode")
+currentCode = AnchorHintFrame:FindFirstChild("Code")
+if not anchorSignText or not currentCode then return end
+signText = anchorSignText.Text
+codeText = currentCode.Text
+if signText == "" or codeText == "" then return end
+playerPosition = LocalPlayer.Character and 
+LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and 
+LocalPlayer.Character.HumanoidRootPart.Position
+if not playerPosition then return end
+for _, anchor in ipairs(cachedAnchors) do
+if not autoAnchorRunning then break end
+sign = anchor:FindFirstChild("Sign")
+if sign then
+textLabel = sign:FindFirstChild("TextLabel")
+if textLabel and textLabel.Text == signText then
+anchorPosition = anchor.PrimaryPart and anchor.PrimaryPart.Position or
+(anchor:FindFirstChildWhichIsA("BasePart") and anchor:FindFirstChildWhichIsA("BasePart").Position)
+if anchorPosition then
+distance = (playerPosition - anchorPosition).Magnitude
+if distance < 12 then
+anchorRemote = anchor:FindFirstChild("AnchorRemote")
+if anchorRemote then
+pcall(function()
+anchorRemote:InvokeServer(codeText)
+end)
+end
+break
+end
+end
+end
+end
+end
+end
+Other:AddToggle('AutoAnchorSolver', {
+    Text = "自动密码机",
+    Default = false,
+Callback = function(Value)
+if Value then
+autoAnchorRunning = true
+updateAnchorCache()
+autoAnchorConnection = game:GetService("RunService").Heartbeat:Connect(function()
+if not autoAnchorRunning then return end
+now = tick()
+if now - lastCheck >= checkInterval then
+lastCheck = now
+solveAnchor()
+end
+end)
+else
+autoAnchorRunning = false
+if autoAnchorConnection then
+autoAnchorConnection:Disconnect()
+autoAnchorConnection = nil
+end
+end
+end
+})
+
 local SeekPathColor = Color3.new(0, 1, 0)
 local SeekPathThickness = 0.2
 local seekPathLines = {}
