@@ -193,7 +193,7 @@ Library:Notify("正在加载 Sapphire | Doors",5)
 
 Window = Library:CreateWindow({
 Title = '💎 Sapphire V2',
-Footer = "楼层："..Floor.Value.." | 版本：2.0.3",
+Footer = "楼层："..Floor.Value.." | 版本：2.0.4",
 Center = true,
 NotifySide = "Right",
 AutoShow = true
@@ -290,7 +290,7 @@ SettingsBox = Tabs.UISettings:AddLeftGroupbox('UI','wrench')
 
 Tabs.Homepage:UpdateWarningBox({
 Title = "更新日志：",
-Text = "//Doors//\n<font color=\"rgb(73,230,133)\">修复Bug\n改进门ESP</font>",
+Text = "//Doors//\n<font color=\"rgb(73,230,133)\">新增彩色主题\n新增彩色字体\n矿车传送</font>",
 IsNormal = true,
 Visible = true,
 LockSize = true,
@@ -2185,7 +2185,7 @@ local espObject = ESPLibrary:Add({
 Name = displayText,
 Model = model,
 Color = DoorColor,
-MaxDistance = 1000,
+MaxDistance = 5000,
 TextSize = ESPGlobalSettings.TextSize,
 ESPType = ESPGlobalSettings.ESPType,
 FillColor = DoorColor,
@@ -5037,6 +5037,70 @@ performMinecartRename()
 end
 end
 
+local minecartTeleportEnabled = false
+local minecartTeleportConnection = nil
+local hasNotifiedReady = false
+local hasNotifiedStart = false
+local hasNotifiedEnd = false
+FloorAnti:AddToggle('MinecartTeleport', {
+    Text = "矿车传送",
+    Tooltip = "不是真的矿车传送，但是比矿车传送更快",
+    Default = false,
+Callback = function(Value)
+if Value then
+hasNotifiedReady = false
+hasNotifiedStart = false
+hasNotifiedEnd = false
+minecartTeleportEnabled = true
+minecartTeleportConnection = RunService.Heartbeat:Connect(function()
+if not minecartTeleportEnabled then return end
+if not Toggles.DeleteMinecart.Value then
+Toggles.DeleteMinecart:SetValue(true)
+end
+local char = LocalPlayer.Character
+if not char then return end
+local latestRoom = ReplicatedStorage.GameData.LatestRoom.Value
+if latestRoom == 44 and not hasNotifiedReady then
+Library:Notify("矿车传送已准备就绪，等待过场动画...",10)
+hasNotifiedReady = true
+end
+local minecarting = char:GetAttribute("Minecarting")
+if not minecarting then
+return
+end
+if latestRoom >= 50 then
+if not hasNotifiedEnd then
+Library:Notify("矿车传送已结束",3)
+hasNotifiedEnd = true
+end
+return
+end
+local room = workspace.CurrentRooms:FindFirstChild(tostring(latestRoom))
+if not room then return end
+local door = room:FindFirstChild("Door")
+if not door then return end
+local doorPart = door:FindFirstChild("Door")
+if not doorPart then return end
+local humanoidRootPart = char:FindFirstChild("HumanoidRootPart")
+if not humanoidRootPart then return end
+local teleportCF = doorPart.CFrame * CFrame.new(0, 0, -3)
+humanoidRootPart.CFrame = teleportCF
+if not hasNotifiedStart then
+Library:Notify("矿车传送开始工作，祝你旅途愉快",3)
+hasNotifiedStart = true
+end
+end)
+table.insert(Connections, minecartTeleportConnection)
+else
+minecartTeleportEnabled = false
+if minecartTeleportConnection then
+minecartTeleportConnection:Disconnect()
+minecartTeleportConnection = nil
+end
+end
+end
+})
+
 local minecartConnection = nil
 FloorAnti:AddToggle('MinecartNoCollision', {
 Text = "矿车无碰撞",
@@ -6429,6 +6493,84 @@ Tooltip = "切换光标的可见性",
 }):OnChanged(function()
 Library.ShowCustomCursor = Toggles.ShowCustomCursor.Value
 end)
+
+SettingsBox:AddToggle("RainbowAccent", {
+    Text = "彩色主题",
+    Default = false,
+Callback = function(value)
+if value then
+if UIStyle == "Linoria" then
+originalAccentColor = Library.AccentColor
+else
+originalAccentColor = Library.Scheme.AccentColor
+end
+rainbowConnection = RunService.RenderStepped:Connect(function()
+local hue = (tick() % 5) / 5
+local newColor = Color3.fromHSV(hue, 1, 1)
+if UIStyle == "Linoria" then
+Library.AccentColor = newColor
+else
+Library.Scheme.AccentColor = newColor
+end
+Library:UpdateColorsUsingRegistry()
+end)
+table.insert(Connections, rainbowConnection)
+else
+if rainbowConnection then
+rainbowConnection:Disconnect()
+rainbowConnection = nil
+end
+if originalAccentColor then
+if UIStyle == "Linoria" then
+Library.AccentColor = originalAccentColor
+else
+Library.Scheme.AccentColor = originalAccentColor
+end
+Library:UpdateColorsUsingRegistry()
+originalAccentColor = nil
+end
+end
+end
+})
+
+SettingsBox:AddToggle("RainbowFont", {
+    Text = "彩色字体",
+    Default = false,
+Callback = function(value)
+if value then
+if UIStyle == "Linoria" then
+originalFontColor = Library.FontColor
+else
+originalFontColor = Library.Scheme.FontColor
+end
+rainbowFontConnection = RunService.RenderStepped:Connect(function()
+local hue = (tick() % 5) / 5
+local newColor = Color3.fromHSV(hue, 1, 1)
+if UIStyle == "Linoria" then
+Library.FontColor = newColor
+else
+Library.Scheme.FontColor = newColor
+end
+Library:UpdateColorsUsingRegistry()
+end)
+table.insert(Connections, rainbowFontConnection)
+else
+if rainbowFontConnection then
+rainbowFontConnection:Disconnect()
+rainbowFontConnection = nil
+end
+if originalFontColor then
+if UIStyle == "Linoria" then
+Library.FontColor = originalFontColor
+else
+Library.Scheme.FontColor = originalFontColor
+end
+Library:UpdateColorsUsingRegistry()
+originalFontColor = nil
+end
+end
+end
+})
 
 SettingsBox:AddDropdown("UIStyleSelector", {
     Values = {"Obsidian", "Linoria"},
