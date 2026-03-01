@@ -193,67 +193,22 @@ Library:Notify("正在加载 Sapphire | Doors",5)
 
 Window = Library:CreateWindow({
 Title = '💎 Sapphire V2',
-Footer = "楼层："..Floor.Value.." | 版本：2.0.4",
+Footer = "楼层："..Floor.Value.." | 版本：2.0.5",
 Center = true,
 NotifySide = "Right",
 AutoShow = true
 })
 
-if UIStyle == "Linoria" then
 Tabs = {
-Homepage = Window:AddTab("主页"),
-Player = Window:AddTab("玩家"),
-Exploits = Window:AddTab("漏洞"),
-Visuals = Window:AddTab("视觉"),
-Floor = Window:AddTab("楼层"),
-Development = Window:AddTab("开发"),
-UISettings = Window:AddTab("配置"),
-Addons = Window:AddTab("插件"),
+Homepage = Window:AddTab("主页","house","首页信息"),
+Player = Window:AddTab("玩家","user","基础功能"),
+Exploits = Window:AddTab("漏洞","bug","利用Doors游戏漏洞"),
+Visuals = Window:AddTab("视觉","scan-eye","渲染&通知"),
+Floor = Window:AddTab("楼层","sparkles","基于楼层"),
+Development = Window:AddTab("开发","terminal","实验性功能"),
+UISettings = Window:AddTab("配置","settings","用户界面&预设"),
+Addons = Window:AddTab("插件","boxes","Sapphire的社区插件"),
 }
-else
-Tabs = {
-Homepage = Window:AddTab({
-Name = "主页",
-Description = "首页信息", 
-Icon = "house"
-}),
-Player = Window:AddTab({
-Name = "玩家",
-Description = "基础功能", 
-Icon = "user"
-}),
-Exploits = Window:AddTab({
-Name = "漏洞",
-Description = "利用Doors游戏漏洞", 
-Icon = "bug"
-}),
-Visuals = Window:AddTab({
-Name = "视觉",
-Description = "渲染&通知", 
-Icon = "scan-eye"
-}),
-Floor = Window:AddTab({
-Name = "楼层",
-Description = "基于楼层", 
-Icon = "sparkles"
-}),
-Development = Window:AddTab({
-Name = "开发",
-Description = "实验性功能", 
-Icon = "terminal"
-}),
-UISettings = Window:AddTab({
-Name = "配置",
-Description = "用户界面&预设", 
-Icon = "settings"
-}),
-Addons = Window:AddTab({
-Name = "插件",
-Description = "Sapphire的社区插件", 
-Icon = "boxes"
-})
-}
-end
 
 User = Tabs.Homepage:AddLeftGroupbox("用户信息","user-round")
 Info = Tabs.Homepage:AddRightGroupbox("信息","info")
@@ -290,7 +245,7 @@ SettingsBox = Tabs.UISettings:AddLeftGroupbox('UI','wrench')
 
 Tabs.Homepage:UpdateWarningBox({
 Title = "更新日志：",
-Text = "//Doors//\n<font color=\"rgb(73,230,133)\">新增彩色主题\n新增彩色字体\n矿车传送</font>",
+Text = "//Doors//\n<font color=\"rgb(73,230,133)\">修改bug\n优化脚本</font>",
 IsNormal = true,
 Visible = true,
 LockSize = true,
@@ -323,7 +278,6 @@ end
 })
 
 Info:AddLabel("[<font color=\"rgb(73,230,133)\">千change</font>] 所有者")
-Info:AddLabel("[<font color=\"rgb(73,230,133)\">3643018932</font>] 贡献者")
 Info:AddDivider()
 Info:AddLabel({
 Text = "<font color=\"rgb(135,206,235)\">加入我们的群组</font>",
@@ -5044,7 +4998,7 @@ local hasNotifiedStart = false
 local hasNotifiedEnd = false
 FloorAnti:AddToggle('MinecartTeleport', {
     Text = "矿车传送",
-    Tooltip = "不是真的矿车传送，但是比矿车传送更快",
+    Tooltip = "不是真的矿车传送，但是比真的更快",
     Default = false,
 Callback = function(Value)
 if Value then
@@ -5061,7 +5015,7 @@ local char = LocalPlayer.Character
 if not char then return end
 local latestRoom = ReplicatedStorage.GameData.LatestRoom.Value
 if latestRoom == 44 and not hasNotifiedReady then
-Library:Notify("矿车传送已准备就绪，等待过场动画...",10)
+Library:Notify("矿车传送已准备就绪！等待过场动画...",10)
 hasNotifiedReady = true
 end
 local minecarting = char:GetAttribute("Minecarting")
@@ -5086,7 +5040,7 @@ if not humanoidRootPart then return end
 local teleportCF = doorPart.CFrame * CFrame.new(0, 0, -3)
 humanoidRootPart.CFrame = teleportCF
 if not hasNotifiedStart then
-Library:Notify("矿车传送开始工作，祝你旅途愉快",3)
+Library:Notify("矿车传送开始工作，祝你旅途愉快！",3)
 hasNotifiedStart = true
 end
 end)
